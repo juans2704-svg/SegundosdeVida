@@ -1,6 +1,7 @@
 ---
 import { foundation } from '../../config/campaign';
 import t from '../../i18n/es';
+import { logo } from '../../config/characters';
 
 const f = t.footer;
 const year = new Date().getFullYear();
@@ -9,7 +10,10 @@ const year = new Date().getFullYear();
 <footer class="footer">
   <div class="wrap footer__grid">
     <div>
-      <p class="footer__brand">⭐ La SUPERCASA</p>
+      <p class="footer__brand">
+        <span class="footer__logo"><img src={logo.src} width={logo.width} height={logo.height} alt={logo.alt} loading="lazy" /></span>
+        La SUPERCASA
+      </p>
       <p>{f.legal} · NIT {foundation.nit}</p>
       <p class="small">
         {f.rights} <a href={`mailto:${foundation.email}`}>{foundation.email}</a>.
@@ -60,6 +64,21 @@ const year = new Date().getFullYear();
     font-size: 1.5rem;
     font-weight: 800;
     color: var(--white);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .footer__logo {
+    display: flex;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: var(--white);
+  }
+  .footer__logo img {
+    display: block;
+    width: 170px;
+    height: auto;
   }
   .footer__label {
     font-weight: 800;

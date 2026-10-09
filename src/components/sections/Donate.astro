@@ -1,5 +1,5 @@
 ---
-import SuperCalvito from '../characters/SuperCalvito.astro';
+import Character from '../characters/Character.astro';
 import SpeechBubble from '../ui/SpeechBubble.astro';
 import { pieces } from '../../config/campaign';
 import { payments } from '../../config/payments';
@@ -13,7 +13,7 @@ const d = t.donate;
   <div class="wrap">
     <div class="donate__intro" data-reveal>
       <div class="donate__calvito">
-        <SuperCalvito who="calvito" accessory="helmet" label="Calvito con casco amarillo de constructor." />
+        <Character who="padrino" />
       </div>
       <div>
         <p class="eyebrow">{d.eyebrow}</p>
@@ -167,7 +167,7 @@ const d = t.donate;
       <div class="step" data-step="3" tabindex="-1" hidden>
         <div class="confirm">
           <div class="confirm__calvita">
-            <SuperCalvito who="calvita" accessory="roller" label="Calvita con un rodillo de pintura." />
+            <Character who="calvita" />
           </div>
           <SpeechBubble html={d.confirm.speech} tail="left" tone="yellow" />
         </div>
@@ -193,7 +193,7 @@ const d = t.donate;
       <!-- Resultado: pendiente / rechazado / error -->
       <div class="step result" data-step="result" tabindex="-1" hidden>
         <div class="result__calvita">
-          <SuperCalvito who="calvita" label="Calvita sonríe." />
+          <Character who="calvita" />
         </div>
         <div>
           <p class="result__msg" data-result-msg aria-live="assertive"></p>

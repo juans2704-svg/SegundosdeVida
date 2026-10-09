@@ -1,25 +1,16 @@
 ---
 import t from '../../i18n/es';
+import { logo } from '../../config/characters';
 ---
 
 <a class="skip" href="#main">{t.nav.skip}</a>
 <header class="header">
   <div class="wrap header__inner">
-    <a class="logo" href="#inicio" aria-label="La SUPERCASA, inicio">
-      <!-- PENDIENTE: logo oficial de la fundación -->
-      <svg viewBox="0 0 64 64" aria-hidden="true" width="40" height="40">
-        <circle cx="32" cy="32" r="30" fill="#FFD400" stroke="#1D2B4F" stroke-width="3"></circle>
-        <polygon
-          points="32,10 38,25 54,25 41,35 46,51 32,41 18,51 23,35 10,25 26,25"
-          fill="#E53935"
-          stroke="#1D2B4F"
-          stroke-width="2.5"
-          stroke-linejoin="round"></polygon>
-      </svg>
-      <span>
-        <strong>La SUPERCASA</strong>
-        <small>Segundos de Vida</small>
+    <a class="logo" href="#inicio" aria-label="La SUPERCASA, Fundación Segundos de Vida. Ir al inicio">
+      <span class="logo__fsv">
+        <img src={logo.src} width={logo.width} height={logo.height} alt="" />
       </span>
+      <strong>La SUPERCASA</strong>
     </a>
     <a class="btn btn--primary header__cta" href="#donar">{t.nav.cta}</a>
   </div>
@@ -57,18 +48,26 @@ import t from '../../i18n/es';
   .logo {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 0.7rem;
     color: var(--ink);
     text-decoration: none;
     line-height: 1;
   }
-  .logo strong {
-    display: block;
-    font-size: 1.2rem;
+  .logo__fsv {
+    display: flex;
+    padding: 6px 10px;
+    border: 2.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--white);
   }
-  .logo small {
-    font-size: 0.85rem;
-    font-weight: 700;
+  .logo__fsv img {
+    display: block;
+    width: 150px;
+    height: auto;
+  }
+  .logo strong {
+    font-size: 1.2rem;
+    white-space: nowrap;
   }
   .header__cta {
     min-height: 44px;
@@ -77,15 +76,14 @@ import t from '../../i18n/es';
     white-space: nowrap;
     box-shadow: 0 4px 0 var(--ink);
   }
-  .logo span {
-    white-space: nowrap;
-  }
-  @media (max-width: 400px) {
-    .logo small {
+  @media (max-width: 560px) {
+    .logo strong {
       display: none;
     }
-    .logo strong {
-      font-size: 1.05rem;
+  }
+  @media (max-width: 400px) {
+    .logo__fsv img {
+      width: 128px;
     }
     .header__cta {
       padding-inline: 0.8rem;

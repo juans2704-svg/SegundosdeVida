@@ -30,12 +30,21 @@ function animateNumber(el: HTMLElement, from: number, to: number) {
   requestAnimationFrame(tick);
 }
 
-function setHouse(level: number, active: boolean) {
+/** Muestra los elementos de la casa ya construidos (uno cada 5%). Devuelve si apareció algo nuevo. */
+function setHouse(pct: number): boolean {
   const house = $<SVGSVGElement>('#main-house');
-  if (!house) return;
-  for (let i = 1; i <= 5; i++) house.classList.toggle(`is-l${i}`, i <= level);
-  house.classList.toggle('is-active', active);
-  house.dataset.level = String(level);
+  if (!house) return false;
+  let grew = false;
+  house.querySelectorAll<SVGElement>('[data-at]').forEach((el) => {
+    const on = pct >= Number(el.dataset.at);
+    if (on && !el.classList.contains('on')) grew = true;
+    el.classList.toggle('on', on);
+  });
+  house.querySelectorAll<SVGElement>('[data-until]').forEach((el) => {
+    el.classList.toggle('off', pct >= Number(el.dataset.until));
+  });
+  house.classList.toggle('is-active', pct >= campaign.activeConstructionPct);
+  return grew;
 }
 
 function pulseHouse() {
@@ -89,11 +98,10 @@ export function render(next: Progress, { announce = true } = {}) {
     chip.className = `chip chip--${done ? 'done' : s.id === now.id ? 'current' : 'todo'}`;
   });
 
+  if (setHouse(pct)) pulseHouse();
   const level = houseLevel(pct);
-  setHouse(level, pct >= campaign.activeConstructionPct);
   if (level !== shownLevel) {
     if (level > shownLevel) {
-      pulseHouse();
       const msg = t.stageMessages[stages[level].id];
       if (announce && msg) toast(msg);
     }

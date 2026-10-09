@@ -1,6 +1,7 @@
 ---
 import House from '../house/House.astro';
 import { campaign, stages } from '../../config/campaign';
+import { houseRender } from '../../config/characters';
 import t from '../../i18n/es';
 ---
 
@@ -11,19 +12,35 @@ import t from '../../i18n/es';
       <h2 id="works-title">{t.works.title}</h2>
       <p class="lead">{t.works.body}</p>
       <p class="address">📍 {campaign.address}</p>
+      <h3 class="where-title">{t.works.whereTitle}</h3>
+      <ul class="where">
+        {
+          t.works.where.map((w) => (
+            <li>
+              <span aria-hidden="true">{w.icon}</span>
+              <p>
+                <strong>{w.title}.</strong> {w.text}
+              </p>
+            </li>
+          ))
+        }
+      </ul>
     </div>
 
-    <!--
-      PENDIENTE: reemplazar las dos ilustraciones por la foto real de la obra
-      y el render de la casa terminada (WebP/AVIF, con loading="lazy").
-    -->
+    <!-- PENDIENTE: reemplazar la ilustración de "Hoy" por la foto real de la obra. -->
     <figure class="compare card" data-compare data-reveal>
       <div class="compare__frame">
-        <div class="compare__layer">
-          <House uid="after" level={5} label={t.works.afterNote} />
-        </div>
-        <div class="compare__layer compare__before" data-compare-before>
-          <House uid="before" level={0} label={t.works.beforeNote} />
+        <img
+          class="compare__after"
+          src={houseRender.src}
+          width={houseRender.width}
+          height={houseRender.height}
+          alt={houseRender.alt}
+          loading="lazy"
+          decoding="async"
+        />
+        <div class="compare__before" data-compare-before>
+          <House uid="before" pct={0} label={t.works.beforeNote} />
         </div>
         <span class="compare__line" data-compare-line aria-hidden="true"></span>
         <span class="tag tag--before">{t.works.before}</span>
@@ -91,6 +108,29 @@ import t from '../../i18n/es';
   .address {
     font-weight: 700;
   }
+  .where-title {
+    margin: 1.4rem 0 0.6rem;
+  }
+  .where {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .where li {
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+  }
+  .where li > span {
+    flex: none;
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+  .where p {
+    margin: 0;
+  }
   .compare {
     margin: 0;
     padding: 1rem;
@@ -101,13 +141,26 @@ import t from '../../i18n/es';
     overflow: hidden;
     background: linear-gradient(180deg, #bfe6fa, #fff);
   }
-  .compare__layer {
-    padding: 1rem 0.5rem 0;
+  .compare__after {
+    display: block;
+    width: 100%;
+    height: auto;
   }
   .compare__before {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, #cfd8e0, #eef2f5);
+    /* Extiende cielo, pasto, andén y calle de la ilustración a los lados */
+    background: linear-gradient(
+      180deg,
+      #8fd3f7 0%,
+      #ddf2fd 87.5%,
+      #7cc35b 87.5% 89.5%,
+      #d9dee3 89.5% 94%,
+      #8c97a4 94%
+    );
+  }
+  .compare__before :global(svg) {
+    height: 100%;
   }
   .compare__line {
     position: absolute;

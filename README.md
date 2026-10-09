@@ -22,6 +22,7 @@ npm run preview
 | Meta, recaudado, héroes, etapas (umbral y % de presupuesto), piezas y montos, datos de la fundación | `src/config/campaign.ts` |
 | Modo de pagos, tasa USD, montos mínimos, llaves Wompi/PayPal | `src/config/payments.ts` + `.env` |
 | Todos los textos (guiones, botones, mensajes de error, mensajes para compartir) | `src/i18n/es.ts` |
+| Artes oficiales (personajes, logo, dibujo de la casa) | `public/img/` + `src/config/characters.ts` |
 | Colores y tipografía | `src/styles/global.css` (variables `:root`) |
 
 `npm run build` falla si algún texto usa la palabra restringida del brief (§4.2).
@@ -34,8 +35,8 @@ src/
   i18n/es.ts       textos (en.ts tendrá la misma forma)
   components/
     sections/      Header, Hero, Story, Works, Donate, Thanks, Transparency, Footer
-    house/         House.astro — la casa SVG con 6 niveles (clases is-l1…is-l5)
-    characters/    calvito.ts — Super Calvitos provisionales en SVG (página + carnet)
+    house/         House.astro — la casa SVG que avanza cada 5% (data-at / data-until)
+    characters/    Character.astro — artes oficiales de los Super Calvitos
     ui/            ProgressPanel, SpeechBubble, Toast, DemoPanel
   lib/
     progress.ts    % de avance, nivel de la casa, etapa actual
@@ -46,7 +47,7 @@ src/
 ```
 
 - **Estático** (Astro, sin framework de UI): ~13 KB de JS comprimido y SVG en línea, pensado para celulares de gama baja.
-- **Casa animada**: niveles por umbral 0 / 32 / 47 / 62 / 78 / 95 %. Desde el 15 % la grúa y el andamio se mueven. Al cruzar un umbral la casa da un saltico y aparece el mensaje de Calvito de esa etapa.
+- **Casa animada**: dibujada a partir del arte oficial; cada 5 % aparece algo nuevo (20 pasos, listados en `House.astro`). Desde el 15 % la grúa y el andamio se mueven. Al cruzar una etapa (32 / 47 / 62 / 78 / 95 %) aparece además el mensaje de Calvito.
 - **Donación**: región (Colombia → Wompi en COP · otro país → PayPal en USD), pieza o monto libre, única o Plan Padrino, datos con consentimiento (Ley 1581), confirmación con impacto y luego el checkout. Referencia `SC-{timestamp}-{monto}`.
 - **Carnet de Héroe**: PNG 1080x1350 dibujado en `<canvas>`. Se puede descargar y compartir (Web Share API con archivo, o con enlaces para WhatsApp, X y Facebook, más el texto para Instagram copiado).
 
@@ -54,7 +55,7 @@ src/
 
 Todo lo marcado `PENDIENTE` en el código:
 
-- [ ] Artes oficiales de los Super Calvitos (reemplazan `characters/`), logo, foto real de la obra y render
+- [ ] Artes de los Super Calvitos en mayor resolución (ideal ≥ 800px, fondo transparente) y foto real de la obra
 - [ ] Recaudado inicial y desglose real del presupuesto por etapa
 - [ ] NIT, registro, correos de contacto y tesorería, redes sociales
 - [ ] Textos legales: política de datos y términos de donación

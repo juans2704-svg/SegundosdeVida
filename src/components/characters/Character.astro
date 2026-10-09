@@ -1,0 +1,43 @@
+---
+import { characters, type CharacterId } from '../../config/characters';
+
+interface Props {
+  who: CharacterId;
+  /** Texto alternativo propio; por defecto el de la configuración. */
+  alt?: string;
+  eager?: boolean;
+  class?: string;
+}
+
+const { who, alt, eager = false, class: className = '' } = Astro.props;
+const c = characters[who];
+---
+
+<figure class:list={['character', className]}>
+  <img
+    src={c.src}
+    width={c.width}
+    height={c.height}
+    alt={alt ?? c.alt}
+    loading={eager ? 'eager' : 'lazy'}
+    decoding="async"
+    fetchpriority={eager ? 'high' : undefined}
+  />
+</figure>
+
+<style>
+  .character {
+    margin: 0;
+    border: 3px solid var(--ink);
+    border-radius: 26px;
+    overflow: hidden;
+    background: var(--sky);
+    box-shadow: var(--shadow);
+    transform: rotate(-2deg);
+  }
+  .character img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+</style>

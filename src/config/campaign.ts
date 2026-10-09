@@ -108,7 +108,7 @@ export const pieces: Piece[] = [
     phrase: 'material de instalación',
     impact: [
       'Tubos y cables que llevan agua y luz a la cocina',
-      'Un paso más para que una mamá cocine cerca del hospital',
+      'Un paso más para que una mamá le cocine a su valiente',
     ],
   },
   {
@@ -155,7 +155,7 @@ export const pieces: Piece[] = [
     impact: [
       'Cama para el niño y para su mamá o cuidador',
       'Un lugar seguro para descansar juntos',
-      'Una familia menos durmiendo lejos del hospital',
+      'Una familia más con un lugar seguro donde dormir',
     ],
   },
   {

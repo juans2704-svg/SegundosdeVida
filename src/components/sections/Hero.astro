@@ -1,10 +1,9 @@
 ---
 import House from '../house/House.astro';
-import SuperCalvito from '../characters/SuperCalvito.astro';
+import Character from '../characters/Character.astro';
 import SpeechBubble from '../ui/SpeechBubble.astro';
 import ProgressPanel from '../ui/ProgressPanel.astro';
-import { campaign } from '../../config/campaign';
-import { getInitialProgress, percentOf, houseLevel } from '../../lib/progress';
+import { getInitialProgress, percentOf } from '../../lib/progress';
 import t from '../../i18n/es';
 
 const pct = percentOf(getInitialProgress());
@@ -22,19 +21,13 @@ const pct = percentOf(getInitialProgress());
     </div>
 
     <div class="hero__house card">
-      <House
-        id="main-house"
-        uid="hero"
-        level={houseLevel(pct)}
-        active={pct >= campaign.activeConstructionPct}
-        label={t.hero.houseAlt}
-      />
+      <House id="main-house" uid="hero" pct={pct} label={t.hero.houseAlt} />
       <ProgressPanel />
     </div>
 
     <div class="hero__talk">
       <div class="hero__calvito">
-        <SuperCalvito who="calvito" wave label="Calvito, un Super Calvito con antifaz verde y capa roja, saluda." />
+        <Character who="calvito" eager />
       </div>
       <SpeechBubble html={t.hero.speech} tail="left" />
     </div>
@@ -83,6 +76,9 @@ const pct = percentOf(getInitialProgress());
     gap: 1rem;
     padding: clamp(14px, 3vw, 24px);
     background: linear-gradient(180deg, #d8f0fd 0%, var(--white) 62%);
+  }
+  .hero__house :global(.house) {
+    border-radius: 14px;
   }
   .hero__talk {
     grid-area: talk;

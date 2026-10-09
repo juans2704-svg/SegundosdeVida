@@ -1,5 +1,5 @@
 ---
-import SuperCalvito from '../characters/SuperCalvito.astro';
+import Character from '../characters/Character.astro';
 import SpeechBubble from '../ui/SpeechBubble.astro';
 import t from '../../i18n/es';
 ---
@@ -8,7 +8,7 @@ import t from '../../i18n/es';
   <div class="wrap">
     <div class="story__talk" data-reveal>
       <div class="story__calvita">
-        <SuperCalvito who="calvita" label="Calvita, una Super Calvita con antifaz rojo, capa azul y un corazón en el pecho." />
+        <Character who="calvita" />
       </div>
       <SpeechBubble html={t.story.speech} tail="left" tone="yellow" />
     </div>

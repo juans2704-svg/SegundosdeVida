@@ -40,6 +40,22 @@ import t from '../../i18n/es';
     flex: 1;
     accent-color: var(--red-strong);
   }
+  @media (max-width: 600px) {
+    .demo-panel {
+      left: 16px;
+      right: 16px;
+      bottom: 10px;
+      width: auto;
+      padding: 0.45rem 0.8rem;
+      box-shadow: 0 3px 0 var(--ink);
+    }
+    .help {
+      display: none;
+    }
+    .row {
+      margin-top: 0.1rem;
+    }
+  }
   output {
     min-width: 3.2em;
     font-weight: 800;

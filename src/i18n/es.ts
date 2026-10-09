@@ -14,7 +14,7 @@ const es = {
   meta: {
     title: 'La SUPERCASA · Ponte la Capa con los Super Calvitos',
     description:
-      'Los Super Calvitos están construyendo su casa cerca del hospital. Pon una pieza y vuélvete héroe oficial de la Fundación Segundos de Vida.',
+      'Los Super Calvitos están construyendo su casa en Bogotá. Pon una pieza y vuélvete héroe oficial de la Fundación Segundos de Vida.',
   },
 
   nav: {
@@ -26,7 +26,7 @@ const es = {
     badge: '🦸 MISIÓN SUPERCASA · BOGOTÁ',
     title: 'La casa que los Super Calvitos están construyendo contigo',
     speech:
-      '¡Hola! Soy <strong>Calvito</strong>. Lucho contra mi enfermedad con mi antifaz y mi capa de estrella 🦸 ¿Te cuento un secreto? Estamos construyendo <strong>mi casa</strong>, la SUPERCASA. Un lugar donde mis amigos y yo podremos quedarnos con nuestras mamás, cerca del hospital. Pero nos falta algo muy importante: <strong>tú</strong>. ¿Me ayudas a terminarla?',
+      '¡Hola! Soy <strong>Calvito</strong>. Lucho contra mi enfermedad con mi antifaz y mi capa de estrella 🦸 ¿Te cuento un secreto? Estamos construyendo <strong>mi casa</strong>, la SUPERCASA. Un lugar donde mis amigos y yo podremos quedarnos con nuestras mamás mientras dura el tratamiento. Pero nos falta algo muy importante: <strong>tú</strong>. ¿Me ayudas a terminarla?',
     ctaPrimary: '🦸 Claro que sí, Calvito',
     ctaSecondary: '💛 ¿Quiénes son los Super Calvitos?',
     nowBuilding: 'Ahora construimos:',
@@ -45,8 +45,8 @@ const es = {
   story: {
     speech:
       'Hola… soy <strong>Calvita</strong> 💛 Para mi tratamiento vine a Bogotá desde muy lejos. Algunas noches, mi mamá y yo no sabíamos dónde dormir. Y yo solo quería algo tan simple… <strong>que mi mamá me cocinara un sancocho y me acariciara mi cabecita</strong>. ¿Tú crees que eso es pedir mucho?',
-    title: 'Un hogar a pocas cuadras del hospital',
-    body: 'La SUPERCASA es el albergue que la Fundación Segundos de Vida construye en el sector Galerías, en Bogotá. Allí vivirán 15 niños y niñas en tratamiento junto con sus familias, mientras dura el camino.',
+    title: 'Un hogar seguro en el corazón de Bogotá',
+    body: 'La SUPERCASA es el hogar que la Fundación Segundos de Vida construye en Galerías, un barrio seguro, central y muy bonito de Bogotá. Allí vivirán 15 niños y niñas en tratamiento junto con sus familias, mientras dura el camino.',
     features: [
       { icon: '🍲', title: 'Cocina', text: 'Para que cada mamá cocine el plato favorito de su valiente.' },
       { icon: '🛏️', title: 'Habitaciones', text: 'Para que niño y cuidador descansen juntos y seguros.' },
@@ -65,9 +65,16 @@ const es = {
     before: 'Hoy',
     after: 'Así quedará',
     beforeNote: 'Foto real de la obra (pendiente)',
-    afterNote: 'Render de la casa terminada (pendiente)',
+    afterNote: 'Dibujo de la casa terminada',
     sliderLabel: 'Desliza para comparar la obra de hoy con la casa terminada',
     stagesTitle: 'Las etapas de la SUPERCASA',
+    whereTitle: '¿Por qué en Galerías?',
+    where: [
+      { icon: '🛡️', title: 'Seguro', text: 'Un barrio tranquilo para los niños y sus cuidadores.' },
+      { icon: '📍', title: 'Central', text: 'En el centro de la ciudad, fácil de llegar desde cualquier lugar.' },
+      { icon: '🚌', title: 'Transporte masivo', text: 'Estaciones cerca para ir a cada cita sin largos trayectos.' },
+      { icon: '🌳', title: 'Un sector bonito', text: 'Calles amables, parques y comercio para sentirse en casa.' },
+    ],
   },
 
   donate: {
