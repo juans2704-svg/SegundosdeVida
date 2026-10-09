@@ -1,14 +1,11 @@
 /**
  * Fases ilustradas de la SUPERCASA (una imagen cada 5 %), según docs/brief-casa-fases.md.
  *
- * Para agregar una fase nueva:
- * 1. Guardar `supercasa-XXX-1200.webp` y `supercasa-XXX-720.webp` en public/img/casa/
- *    (alineadas con las demás y del mismo tamaño).
- * 2. Agregar el porcentaje a `available`.
+ * Para reemplazar una fase: guardar `supercasa-XXX-1200.webp` y `supercasa-XXX-720.webp`
+ * en public/img/casa/, alineadas con las demás y del mismo tamaño (1200 × 893 y 720 × 536).
  */
 export const houseFrames = {
-  /** PENDIENTE: faltan 0 % a 45 %. */
-  available: [50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],
+  available: Array.from({ length: 21 }, (_, i) => i * 5),
   width: 1200,
   height: 893,
   widths: [720, 1200],
@@ -34,5 +31,3 @@ export function frameFor(pct: number): { frame: number; step: number; missing: b
   const frame = below.length ? below[below.length - 1] : list[0];
   return { frame, step, missing: frame !== step };
 }
-
-export const hasFrame = (pct: number) => houseFrames.available.includes(pct);

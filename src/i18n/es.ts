@@ -64,7 +64,7 @@ const es = {
     body: 'Lo que falta es lo que la convierte en hogar: fachada, instalaciones, cocina, habitaciones y el jardín de la azotea.',
     before: 'Hoy',
     after: 'Así quedará',
-    beforeNote: 'Foto real de la obra (pendiente)',
+    beforeNote: 'Obra gris, como está hoy',
     afterNote: 'Dibujo de la casa terminada',
     sliderLabel: 'Desliza para comparar la obra de hoy con la casa terminada',
     stagesTitle: 'Las etapas de la SUPERCASA',

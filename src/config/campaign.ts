@@ -42,8 +42,6 @@ export const campaign = {
   updatedAt: '2026-10-09',
   /** La barra nunca se ve vacía (brief §7.2). */
   minVisualPct: 3,
-  /** Desde este % la obra se ve "en movimiento" (grúa y andamio activos). */
-  activeConstructionPct: 15,
   address: 'Cr. 28 Bis #51-33, sector Galerías, Bogotá',
   capacity: 15,
 };
