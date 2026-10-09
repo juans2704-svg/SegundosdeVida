@@ -2,6 +2,9 @@
 import House from '../house/House.astro';
 import { campaign, stages } from '../../config/campaign';
 import { houseRender } from '../../config/characters';
+import { houseFrames, frameSrc, frameSrcset, hasFrame } from '../../config/house';
+
+const sizes = '(min-width: 900px) 620px, calc(100vw - 64px)';
 import t from '../../i18n/es';
 ---
 
@@ -32,15 +35,32 @@ import t from '../../i18n/es';
       <div class="compare__frame">
         <img
           class="compare__after"
-          src={houseRender.src}
-          width={houseRender.width}
-          height={houseRender.height}
+          src={frameSrc(100)}
+          srcset={frameSrcset(100)}
+          sizes={sizes}
+          width={houseFrames.width}
+          height={houseFrames.height}
           alt={houseRender.alt}
           loading="lazy"
           decoding="async"
         />
         <div class="compare__before" data-compare-before>
-          <House uid="before" pct={0} label={t.works.beforeNote} />
+          {
+            hasFrame(0) ? (
+              <img
+                src={frameSrc(0)}
+                srcset={frameSrcset(0)}
+                sizes={sizes}
+                width={houseFrames.width}
+                height={houseFrames.height}
+                alt={t.works.beforeNote}
+                loading="lazy"
+                decoding="async"
+              />
+            ) : (
+              <House uid="before" pct={0} label={t.works.beforeNote} />
+            )
+          }
         </div>
         <span class="compare__line" data-compare-line aria-hidden="true"></span>
         <span class="tag tag--before">{t.works.before}</span>
@@ -159,8 +179,12 @@ import t from '../../i18n/es';
       #8c97a4 94%
     );
   }
-  .compare__before :global(svg) {
+  .compare__before :global(svg),
+  .compare__before img {
+    display: block;
+    width: 100%;
     height: 100%;
+    object-fit: cover;
   }
   .compare__line {
     position: absolute;

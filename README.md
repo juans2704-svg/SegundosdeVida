@@ -47,7 +47,7 @@ src/
 ```
 
 - **Estático** (Astro, sin framework de UI): ~13 KB de JS comprimido y SVG en línea, pensado para celulares de gama baja.
-- **Casa animada**: dibujada a partir del arte oficial; cada 5 % aparece algo nuevo (20 pasos, listados en `House.astro`). Desde el 15 % la grúa y el andamio se mueven. Al cruzar una etapa (32 / 47 / 62 / 78 / 95 %) aparece además el mensaje de Calvito.
+- **Casa por fases**: una ilustración cada 5 % (`public/img/casa/`, configuradas en `src/config/house.ts`), con fundido al cambiar de fase. Las especificaciones para el ilustrador están en `docs/brief-casa-fases.md`. Si falta una fase, se muestra la más cercana (y en modo demo, una etiqueta lo indica). Desde el 15 % la grúa y el andamio se mueven. Al cruzar una etapa (32 / 47 / 62 / 78 / 95 %) aparece además el mensaje de Calvito.
 - **Donación**: región (Colombia → Wompi en COP · otro país → PayPal en USD), pieza o monto libre, única o Plan Padrino, datos con consentimiento (Ley 1581), confirmación con impacto y luego el checkout. Referencia `SC-{timestamp}-{monto}`.
 - **Carnet de Héroe**: PNG 1080x1350 dibujado en `<canvas>`. Se puede descargar y compartir (Web Share API con archivo, o con enlaces para WhatsApp, X y Facebook, más el texto para Instagram copiado).
 
@@ -56,6 +56,7 @@ src/
 Todo lo marcado `PENDIENTE` en el código:
 
 - [ ] Artes de los Super Calvitos en mayor resolución (ideal ≥ 800px, fondo transparente) y foto real de la obra
+- [ ] Ilustraciones de la casa de 0 % a 45 % (`docs/brief-casa-fases.md`)
 - [ ] Recaudado inicial y desglose real del presupuesto por etapa
 - [ ] NIT, registro, correos de contacto y tesorería, redes sociales
 - [ ] Textos legales: política de datos y términos de donación

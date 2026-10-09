@@ -1,5 +1,5 @@
 ---
-import House from '../house/House.astro';
+import HouseFrames from '../house/HouseFrames.astro';
 import Character from '../characters/Character.astro';
 import SpeechBubble from '../ui/SpeechBubble.astro';
 import ProgressPanel from '../ui/ProgressPanel.astro';
@@ -21,7 +21,7 @@ const pct = percentOf(getInitialProgress());
     </div>
 
     <div class="hero__house card">
-      <House id="main-house" uid="hero" pct={pct} label={t.hero.houseAlt} />
+      <HouseFrames pct={pct} label={t.hero.houseAlt} />
       <ProgressPanel />
     </div>
 
@@ -76,9 +76,6 @@ const pct = percentOf(getInitialProgress());
     gap: 1rem;
     padding: clamp(14px, 3vw, 24px);
     background: linear-gradient(180deg, #d8f0fd 0%, var(--white) 62%);
-  }
-  .hero__house :global(.house) {
-    border-radius: 14px;
   }
   .hero__talk {
     grid-area: talk;

@@ -6,6 +6,7 @@ import { campaign, stages } from '../config/campaign';
 import { getInitialProgress, percentOf, visualPercent, houseLevel, currentStage, type Progress } from '../lib/progress';
 import { formatCOP } from '../lib/format';
 import { payments } from '../config/payments';
+import { houseFrames, frameFor, frameSrc, frameSrcset } from '../config/house';
 import t from '../i18n/es';
 
 let state: Progress = getInitialProgress();
@@ -30,29 +31,57 @@ function animateNumber(el: HTMLElement, from: number, to: number) {
   requestAnimationFrame(tick);
 }
 
-/** Muestra los elementos de la casa ya construidos (uno cada 5%). Devuelve si apareció algo nuevo. */
+/** Cambia la ilustración de la casa a la fase que corresponde. Devuelve si la casa avanzó. */
+let frameToken = 0;
 function setHouse(pct: number): boolean {
-  const house = $<SVGSVGElement>('#main-house');
-  if (!house) return false;
-  let grew = false;
-  house.querySelectorAll<SVGElement>('[data-at]').forEach((el) => {
-    const on = pct >= Number(el.dataset.at);
-    if (on && !el.classList.contains('on')) grew = true;
-    el.classList.toggle('on', on);
+  const box = $('[data-house-frames]');
+  if (!box) return false;
+  const { frame, step, missing } = frameFor(pct);
+  const note = box.querySelector<HTMLElement>('[data-frame-missing]');
+  if (note) {
+    note.hidden = !missing;
+    note.querySelector('[data-frame-step]')!.textContent = String(step);
+  }
+  preload(Math.min(100, step + 5));
+  const current = Number(box.dataset.frame);
+  if (frame === current) return false;
+  box.dataset.frame = String(frame);
+
+  const token = ++frameToken;
+  const img = new Image();
+  img.className = 'frames__img is-entering';
+  img.alt = box.querySelector('img')?.alt ?? '';
+  img.width = houseFrames.width;
+  img.height = houseFrames.height;
+  img.sizes = box.dataset.sizes ?? '100vw';
+  img.srcset = frameSrcset(frame);
+  img.src = frameSrc(frame);
+  img.decode().catch(() => {}).then(() => {
+    if (token !== frameToken) return;
+    const old = [...box.querySelectorAll<HTMLImageElement>('.frames__img')];
+    box.insertBefore(img, note ?? null);
+    requestAnimationFrame(() => img.classList.remove('is-entering'));
+    setTimeout(() => old.forEach((o) => o.remove()), 1300);
   });
-  house.querySelectorAll<SVGElement>('[data-until]').forEach((el) => {
-    el.classList.toggle('off', pct >= Number(el.dataset.until));
-  });
-  house.classList.toggle('is-active', pct >= campaign.activeConstructionPct);
-  return grew;
+  return frame > current;
+}
+
+const preloaded = new Set<number>();
+function preload(pct: number) {
+  const { frame } = frameFor(pct);
+  if (preloaded.has(frame)) return;
+  preloaded.add(frame);
+  const img = new Image();
+  img.sizes = $('[data-house-frames]')?.dataset.sizes ?? '100vw';
+  img.srcset = frameSrcset(frame);
 }
 
 function pulseHouse() {
-  const house = $<SVGSVGElement>('#main-house');
-  if (!house) return;
-  house.classList.remove('is-building');
-  void house.getBoundingClientRect();
-  house.classList.add('is-building');
+  const box = $('[data-house-frames]');
+  if (!box) return;
+  box.classList.remove('is-building');
+  void box.getBoundingClientRect();
+  box.classList.add('is-building');
 }
 
 let toastTimer = 0;

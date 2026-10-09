@@ -1,0 +1,97 @@
+---
+/**
+ * La SUPERCASA ilustrada por fases. `src/scripts/progress.ts` cambia la imagen
+ * con un fundido cuando el recaudo pasa a otra fase de 5 %.
+ */
+import { houseFrames, frameFor, frameSrc, frameSrcset } from '../../config/house';
+import { payments } from '../../config/payments';
+
+interface Props {
+  pct: number;
+  label: string;
+}
+
+const { pct, label } = Astro.props;
+const { frame, step, missing } = frameFor(pct);
+const sizes = '(min-width: 960px) 560px, calc(100vw - 64px)';
+---
+
+<div class="frames" data-house-frames data-frame={frame} data-sizes={sizes}>
+  <img
+    class="frames__img"
+    src={frameSrc(frame)}
+    srcset={frameSrcset(frame)}
+    sizes={sizes}
+    width={houseFrames.width}
+    height={houseFrames.height}
+    alt={label}
+    fetchpriority="high"
+    decoding="async"
+  />
+  {
+    payments.mode === 'demo' && (
+      <p class="frames__missing" data-frame-missing hidden={!missing}>
+        Imagen de la fase <span data-frame-step>{step}</span>% pendiente
+      </p>
+    )
+  }
+</div>
+
+<style>
+  .frames {
+    position: relative;
+    aspect-ratio: 1200 / 893;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #8fd3f7;
+  }
+  .frames.is-building {
+    animation: build 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .frames :global(.frames__img) {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 1.2s ease;
+  }
+  .frames :global(.frames__img.is-entering) {
+    opacity: 0;
+  }
+  .frames__missing {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    margin: 0;
+    padding: 0.15rem 0.7rem;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--yellow-soft);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  @keyframes build {
+    0% {
+      transform: scale(1);
+    }
+    35% {
+      transform: scale(0.985);
+    }
+    70% {
+      transform: scale(1.01);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .frames :global(.frames__img) {
+      transition: none;
+    }
+    .frames.is-building {
+      animation: none;
+    }
+  }
+</style>
