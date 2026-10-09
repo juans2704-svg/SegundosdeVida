@@ -1,0 +1,200 @@
+---
+import { campaign, stages, foundation, wall } from '../../config/campaign';
+import { getInitialProgress } from '../../lib/progress';
+import { formatCOP } from '../../lib/format';
+import t from '../../i18n/es';
+
+const tr = t.transparency;
+const progress = getInitialProgress();
+---
+
+<section class="section transparency" id="transparencia" aria-labelledby="tr-title">
+  <div class="wrap">
+    <p class="eyebrow">{tr.eyebrow}</p>
+    <h2 id="tr-title">{tr.title}</h2>
+    <p class="lead">{tr.body}</p>
+
+    <div class="tr__grid">
+      <div class="card table-wrap" data-reveal>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">{tr.stage}</th>
+              <th scope="col">{tr.share}</th>
+              <th scope="col">{tr.amount}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              stages.map((s) => (
+                <tr>
+                  <th scope="row">
+                    <span aria-hidden="true">{s.icon}</span> {s.name}
+                  </th>
+                  <td>
+                    <span class="mini-bar" style={`--w:${s.budgetPct * 2.5}%`} aria-hidden="true" />
+                    {s.budgetPct}%
+                  </td>
+                  <td>{formatCOP((campaign.goal * s.budgetPct) / 100)}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Total</th>
+              <td>{stages.reduce((a, s) => a + s.budgetPct, 0)}%</td>
+              <td>{formatCOP(campaign.goal)}</td>
+            </tr>
+          </tfoot>
+        </table>
+        <p class="note">* {tr.placeholderNote}</p>
+      </div>
+
+      <div class="side">
+        <div class="card heroes" data-reveal>
+          <h3>{tr.heroesTitle}</h3>
+          <p class="heroes__count"><strong data-heroes-count>{progress.heroes}</strong> 🦸</p>
+          <ul class="wall" data-wall>
+            {
+              wall.map((w) => (
+                <li>
+                  <strong>{w.name}</strong> · {w.piece}
+                </li>
+              ))
+            }
+          </ul>
+          {wall.length === 0 && <p class="wall__empty" data-wall-empty>{tr.heroesEmpty}</p>}
+        </div>
+
+        <div class="card org" data-reveal>
+          <h3>{tr.foundationTitle}</h3>
+          <dl>
+            <dt>{tr.nit}</dt>
+            <dd>{foundation.nit}</dd>
+            <dt>{tr.registry}</dt>
+            <dd>{foundation.registry}</dd>
+            <dt>{tr.contact}</dt>
+            <dd><a href={`mailto:${foundation.email}`}>{foundation.email}</a></dd>
+          </dl>
+          <p>
+            {tr.website} <a href={foundation.website} target="_blank" rel="noopener">segundosdevida.com</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .transparency {
+    background: var(--white);
+  }
+  .lead {
+    max-width: 62ch;
+    font-size: 1.15rem;
+  }
+  .tr__grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  @media (min-width: 900px) {
+    .tr__grid {
+      grid-template-columns: 1.3fr 1fr;
+    }
+  }
+  .table-wrap {
+    padding: 1rem;
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th,
+  td {
+    padding: 0.7rem 0.5rem;
+    text-align: left;
+    border-bottom: 2px solid #e8ecf2;
+  }
+  thead th {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-soft);
+  }
+  td:last-child,
+  th:last-child {
+    text-align: right;
+    white-space: nowrap;
+  }
+  tfoot th,
+  tfoot td {
+    font-weight: 800;
+    border-bottom: 0;
+  }
+  .mini-bar {
+    display: inline-block;
+    width: var(--w);
+    max-width: 70px;
+    height: 10px;
+    margin-right: 0.4rem;
+    border-radius: 999px;
+    background: var(--green);
+    vertical-align: middle;
+  }
+  .note {
+    margin: 0.6rem 0 0;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+  .side {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .heroes,
+  .org {
+    padding: 1.4rem;
+  }
+  .heroes {
+    background: var(--yellow-soft);
+  }
+  .heroes__count {
+    margin: 0;
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .wall {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 1rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .wall :global(li) {
+    padding: 0.2rem 0.7rem;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--white);
+    font-size: 0.9rem;
+  }
+  .wall__empty {
+    margin: 0.8rem 0 0;
+  }
+  dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.3rem 1rem;
+    margin: 0 0 1rem;
+  }
+  dt {
+    font-weight: 800;
+  }
+  dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+</style>

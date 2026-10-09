@@ -1,0 +1,16 @@
+{
+  "name": "supercasa-segundos-de-vida",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Landing de la campaña La SUPERCASA — Fundación Segundos de Vida",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "npm run check:copy && astro build",
+    "preview": "astro preview",
+    "check:copy": "node scripts/check-copy.mjs"
+  },
+  "dependencies": {
+    "astro": "5.18.2"
+  }
+}

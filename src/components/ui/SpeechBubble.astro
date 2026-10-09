@@ -1,0 +1,72 @@
+---
+/**
+ * Globo de diálogo de un Super Calvito. `html` permite <strong> en los guiones.
+ */
+interface Props {
+  html: string;
+  tail?: 'left' | 'right' | 'top';
+  tone?: 'white' | 'yellow';
+  id?: string;
+}
+const { html, tail = 'left', tone = 'white', id } = Astro.props;
+---
+
+<blockquote class:list={['bubble', `bubble--${tail}`, `bubble--${tone}`]} id={id}>
+  <p set:html={html} />
+</blockquote>
+
+<style>
+  .bubble {
+    position: relative;
+    margin: 0;
+    padding: 1.1rem 1.3rem;
+    border: 3px solid var(--ink);
+    border-radius: 26px;
+    background: var(--white);
+    box-shadow: 0 6px 0 var(--ink);
+    font-size: 1.05rem;
+    line-height: 1.55;
+  }
+  .bubble--yellow {
+    background: var(--yellow-soft);
+  }
+  .bubble p {
+    margin: 0;
+  }
+  .bubble :global(strong) {
+    color: var(--red-text);
+  }
+  .bubble::after {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: inherit;
+    border: inherit;
+    border-width: 0 0 3px 3px;
+  }
+  .bubble--left::after {
+    left: -13px;
+    top: 38px;
+    transform: rotate(45deg);
+  }
+  .bubble--right::after {
+    right: -13px;
+    top: 38px;
+    transform: rotate(-135deg);
+  }
+  .bubble--top::after {
+    left: 48px;
+    top: -13px;
+    transform: rotate(135deg);
+  }
+  @media (max-width: 720px) {
+    .bubble--left::after,
+    .bubble--right::after {
+      left: 48px;
+      right: auto;
+      top: -13px;
+      transform: rotate(135deg);
+    }
+  }
+</style>

@@ -1,0 +1,95 @@
+---
+import t from '../../i18n/es';
+---
+
+<a class="skip" href="#main">{t.nav.skip}</a>
+<header class="header">
+  <div class="wrap header__inner">
+    <a class="logo" href="#inicio" aria-label="La SUPERCASA, inicio">
+      <!-- PENDIENTE: logo oficial de la fundación -->
+      <svg viewBox="0 0 64 64" aria-hidden="true" width="40" height="40">
+        <circle cx="32" cy="32" r="30" fill="#FFD400" stroke="#1D2B4F" stroke-width="3"></circle>
+        <polygon
+          points="32,10 38,25 54,25 41,35 46,51 32,41 18,51 23,35 10,25 26,25"
+          fill="#E53935"
+          stroke="#1D2B4F"
+          stroke-width="2.5"
+          stroke-linejoin="round"></polygon>
+      </svg>
+      <span>
+        <strong>La SUPERCASA</strong>
+        <small>Segundos de Vida</small>
+      </span>
+    </a>
+    <a class="btn btn--primary header__cta" href="#donar">{t.nav.cta}</a>
+  </div>
+</header>
+
+<style>
+  .skip {
+    position: absolute;
+    left: 1rem;
+    top: -100px;
+    z-index: 100;
+    padding: 0.6rem 1rem;
+    background: var(--ink);
+    color: var(--white);
+    border-radius: 12px;
+  }
+  .skip:focus {
+    top: 1rem;
+  }
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgb(110 193 240 / 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 3px solid var(--ink);
+  }
+  .header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 68px;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--ink);
+    text-decoration: none;
+    line-height: 1;
+  }
+  .logo strong {
+    display: block;
+    font-size: 1.2rem;
+  }
+  .logo small {
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  .header__cta {
+    min-height: 44px;
+    padding: 0.45rem 1.1rem;
+    font-size: 1rem;
+    white-space: nowrap;
+    box-shadow: 0 4px 0 var(--ink);
+  }
+  .logo span {
+    white-space: nowrap;
+  }
+  @media (max-width: 400px) {
+    .logo small {
+      display: none;
+    }
+    .logo strong {
+      font-size: 1.05rem;
+    }
+    .header__cta {
+      padding-inline: 0.8rem;
+      font-size: 0.95rem;
+    }
+  }
+</style>

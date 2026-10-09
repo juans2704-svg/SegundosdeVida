@@ -1,0 +1,113 @@
+---
+import SuperCalvito from '../characters/SuperCalvito.astro';
+import t from '../../i18n/es';
+
+const th = t.thanks;
+---
+
+<!-- Se muestra solo después de un pago aprobado (src/scripts/donation.ts) -->
+<section class="section thanks" id="gracias" aria-labelledby="thanks-title" hidden data-thanks>
+  <div class="wrap thanks__grid">
+    <div>
+      <div class="thanks__talk">
+        <div class="thanks__calvito">
+          <SuperCalvito who="calvito" accessory="party" label="Calvito de fiesta con gorro y confeti." />
+        </div>
+        <blockquote class="bubble" data-thanks-speech></blockquote>
+      </div>
+
+      <div class="share" data-share>
+        <button type="button" class="btn btn--primary" data-share-native hidden>{th.share}</button>
+        <a class="btn btn--white" data-share-net="whatsapp" target="_blank" rel="noopener">💬 {th.whatsapp}</a>
+        <a class="btn btn--white" data-share-net="x" target="_blank" rel="noopener">𝕏 {th.x}</a>
+        <a class="btn btn--white" data-share-net="facebook" target="_blank" rel="noopener">📘 {th.facebook}</a>
+        <button type="button" class="btn btn--white" data-share-instagram>📸 {th.instagram}</button>
+        <p class="share__status" data-share-status aria-live="polite"></p>
+      </div>
+    </div>
+
+    <figure class="carnet">
+      <h2 id="thanks-title" class="carnet__title">{th.title}</h2>
+      <canvas width="1080" height="1350" data-carnet role="img"></canvas>
+      <a class="btn btn--yellow" data-carnet-download download="carnet-heroe-supercasa.png">{th.download}</a>
+    </figure>
+  </div>
+</section>
+
+<style>
+  .thanks {
+    background: radial-gradient(circle at 30% 20%, #fff6c7 0%, var(--sky) 70%);
+  }
+  .thanks__grid {
+    display: grid;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  @media (min-width: 900px) {
+    .thanks__grid {
+      grid-template-columns: 1.1fr 0.9fr;
+    }
+  }
+  .thanks__talk {
+    display: grid;
+    grid-template-columns: minmax(110px, 180px) 1fr;
+    gap: 1.2rem;
+    align-items: center;
+  }
+  .bubble {
+    margin: 0;
+    padding: 1.2rem 1.4rem;
+    border: 3px solid var(--ink);
+    border-radius: 26px;
+    background: var(--white);
+    box-shadow: var(--shadow);
+    font-size: 1.1rem;
+  }
+  .bubble :global(strong) {
+    color: var(--red-text);
+  }
+  .share {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    margin-top: 2rem;
+  }
+  .share .btn {
+    min-height: 48px;
+    font-size: 1rem;
+  }
+  .share__status {
+    flex-basis: 100%;
+    margin: 0;
+    font-weight: 700;
+  }
+  .carnet {
+    display: grid;
+    gap: 1rem;
+    justify-items: center;
+    margin: 0;
+  }
+  .carnet__title {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    margin: 0;
+  }
+  .carnet canvas {
+    width: min(100%, 380px);
+    height: auto;
+    border: 3px solid var(--ink);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    background: var(--sky);
+  }
+  @media (max-width: 520px) {
+    .thanks__talk {
+      grid-template-columns: 1fr;
+    }
+    .thanks__calvito {
+      width: 130px;
+    }
+    .share .btn {
+      flex: 1 1 45%;
+    }
+  }
+</style>

@@ -1,0 +1,378 @@
+---
+/**
+ * LA SUPERCASA animada (brief §7.1).
+ *
+ * Seis niveles visuales que se activan con clases acumulativas `is-l1` … `is-l5`
+ * en la raíz del SVG. `src/scripts/progress.ts` cambia las clases cuando sube el
+ * recaudo; aquí `level` define el estado inicial (renderizado en el servidor).
+ *
+ * 0  Obra gris: concreto, vanos oscuros, grúa, andamio, cerca.
+ * 1  ≥32% Cubierta + jardín en azotea.
+ * 2  ≥47% Fachada ladrillo/beige + ventanas.
+ * 3  ≥62% Luces encendidas.
+ * 4  ≥78% Vitral central + interiores (cocina, habitación).
+ * 5  ≥95% Letrero, luces de azotea, sin cerca ni grúa, familia llegando.
+ * `active` (≥15%): grúa y andamio en movimiento.
+ */
+interface Props {
+  level?: number;
+  active?: boolean;
+  /** Prefijo único para ids internos (filtros) cuando hay varias casas. */
+  uid: string;
+  label: string;
+  id?: string;
+  class?: string;
+}
+
+const { level = 0, active = false, uid, label, id, class: className = '' } = Astro.props;
+
+const levelClasses = Array.from({ length: level }, (_, i) => `is-l${i + 1}`);
+
+// Geometría: 4 pisos de 60px entre y=80 y y=320, fachada de x=110 a x=310.
+const floorTops = [80, 140, 200]; // pisos 4, 3, 2 (de arriba hacia abajo)
+const windowX = [129, 193, 257];
+const upperWindows = floorTops.flatMap((top) => windowX.map((x) => ({ x, y: top + 18 })));
+const groundWindows = [
+  { x: 129, y: 280 },
+  { x: 257, y: 280 },
+];
+const windows = [...upperWindows, ...groundWindows];
+const vitral = { cx: 210, cy: 173 }; // reemplaza la ventana central del piso 3
+const glazed = windows.filter((w) => !(w.x === 193 && w.y === 158));
+const columns = [110, 174, 240, 304];
+const slabs = [80, 140, 200, 260];
+
+const vitralColors = ['#E53935', '#FFD400', '#4CAF50', '#2F80ED', '#F06292', '#8E5CC9'];
+const wedges = vitralColors.map((color, i) => {
+  const a0 = (Math.PI / 3) * i;
+  const a1 = (Math.PI / 3) * (i + 1);
+  const r = 17;
+  const p = (a: number) => `${(vitral.cx + r * Math.cos(a)).toFixed(1)} ${(vitral.cy + r * Math.sin(a)).toFixed(1)}`;
+  return { color, d: `M${vitral.cx} ${vitral.cy} L${p(a0)} A${r} ${r} 0 0 1 ${p(a1)} Z` };
+});
+
+const lightBulbs = Array.from({ length: 11 }, (_, i) => ({
+  x: 116 + i * 18.8,
+  y: 50 + Math.sin((i / 10) * Math.PI) * 7,
+  color: ['#FFD400', '#E53935', '#4CAF50', '#2F80ED', '#F06292'][i % 5],
+}));
+
+const confetti = [
+  { x: 120, y: 22, c: '#FFD400', s: 7 },
+  { x: 300, y: 14, c: '#E53935', s: 6 },
+  { x: 70, y: 70, c: '#4CAF50', s: 5 },
+  { x: 360, y: 90, c: '#F06292', s: 6 },
+  { x: 220, y: 6, c: '#8E5CC9', s: 5 },
+];
+const starPoints = (cx: number, cy: number, r: number) =>
+  Array.from({ length: 10 }, (_, i) => {
+    const rad = i % 2 === 0 ? r : r * 0.45;
+    const a = (Math.PI / 5) * i - Math.PI / 2;
+    return `${(cx + rad * Math.cos(a)).toFixed(1)},${(cy + rad * Math.sin(a)).toFixed(1)}`;
+  }).join(' ');
+---
+
+<svg
+  id={id}
+  class:list={['house', className, levelClasses, { 'is-active': active }]}
+  viewBox="0 0 420 360"
+  role="img"
+  aria-label={label}
+  data-level={level}
+>
+  <defs>
+    <filter id={`${uid}-glow`} x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="b" />
+      <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+    </filter>
+    <pattern id={`${uid}-brick`} width="16" height="10" patternUnits="userSpaceOnUse">
+      <rect width="16" height="10" fill="#D9825B" />
+      <path d="M0 0.5H16M0 5.5H16M8 0V5M0 5V10M16 5V10" stroke="#B8603C" stroke-width="1" />
+    </pattern>
+  </defs>
+
+  <!-- Suelo -->
+  <rect x="0" y="320" width="420" height="40" fill="#7CC35B" />
+  <rect x="0" y="326" width="420" height="9" fill="#E3E6EA" />
+
+  <!-- Grúa -->
+  <g class="h-crane">
+    <rect x="352" y="36" width="12" height="284" fill="#FFB300" stroke="#1D2B4F" stroke-width="2" />
+    <path
+      d="M352 60 L364 80 M364 60 L352 80 M352 100 L364 120 M364 100 L352 120 M352 140 L364 160 M364 140 L352 160 M352 180 L364 200 M364 180 L352 200 M352 220 L364 240 M364 220 L352 240 M352 260 L364 280 M364 260 L352 280"
+      stroke="#1D2B4F"
+      stroke-width="1.5"
+    />
+    <rect x="196" y="36" width="210" height="10" fill="#FFB300" stroke="#1D2B4F" stroke-width="2" />
+    <rect x="384" y="46" width="22" height="16" fill="#5B6573" stroke="#1D2B4F" stroke-width="2" />
+    <rect x="348" y="20" width="20" height="18" rx="3" fill="#E53935" stroke="#1D2B4F" stroke-width="2" />
+    <g class="h-hook">
+      <line x1="236" y1="46" x2="236" y2="62" stroke="#1D2B4F" stroke-width="2" />
+      <rect x="222" y="62" width="28" height="12" fill="#A7AFB8" stroke="#1D2B4F" stroke-width="2" />
+    </g>
+  </g>
+
+  <!-- Estructura en concreto (obra gris) -->
+  <g class="h-structure">
+    <rect x="110" y="80" width="200" height="240" fill="#A7AFB8" />
+    {windows.map((w) => <rect x={w.x} y={w.y} width="34" height="28" fill="#39404A" />)}
+    <rect x="196" y="276" width="28" height="44" fill="#39404A" />
+    {columns.map((x) => <rect x={x} y="80" width="6" height="240" fill="#8C949E" />)}
+    {slabs.map((y) => <rect x="104" y={y} width="212" height="7" fill="#8C949E" stroke="#1D2B4F" stroke-width="1" />)}
+    <rect x="110" y="80" width="200" height="240" fill="none" stroke="#1D2B4F" stroke-width="2.5" />
+  </g>
+  <g class="h-rebar">
+    {columns.map((x) => <path d={`M${x + 1} 80 V66 M${x + 5} 80 V70`} stroke="#6B4F3A" stroke-width="2" />)}
+  </g>
+
+  <!-- 2: Fachada y ventanas -->
+  <g class="h-facade reveal">
+    <rect x="110" y="87" width="200" height="173" fill="#F4DDB8" />
+    <rect x="110" y="260" width="200" height="60" fill={`url(#${uid}-brick)`} />
+    {slabs.map((y) => <rect x="104" y={y} width="212" height="7" fill="#FFF8EC" stroke="#1D2B4F" stroke-width="1" />)}
+    {windows.map((w) => (
+      <g>
+        <rect x={w.x - 2} y={w.y - 2} width="38" height="32" rx="3" fill="#fff" stroke="#1D2B4F" stroke-width="2" />
+        <rect x={w.x + 2} y={w.y + 2} width="30" height="24" fill="#BFE6FA" />
+        <path d={`M${w.x + 17} ${w.y + 2} V${w.y + 26} M${w.x + 2} ${w.y + 14} H${w.x + 32}`} stroke="#fff" stroke-width="2" />
+        <rect x={w.x - 4} y={w.y + 29} width="42" height="4" rx="2" fill="#E53935" />
+      </g>
+    ))}
+    <rect x="196" y="276" width="28" height="44" rx="3" fill="#E53935" stroke="#1D2B4F" stroke-width="2" />
+    <polygon points={starPoints(210, 294, 7)} fill="#FFD400" stroke="#1D2B4F" stroke-width="1" />
+    <circle cx="219" cy="302" r="2" fill="#FFD400" />
+    <rect x="110" y="80" width="200" height="240" fill="none" stroke="#1D2B4F" stroke-width="2.5" />
+  </g>
+
+  <!-- 3: Luces encendidas -->
+  <g class="h-glow reveal" filter={`url(#${uid}-glow)`}>
+    {glazed.map((w, i) => (
+      <rect x={w.x + 2} y={w.y + 2} width="30" height="24" fill={i % 3 === 1 ? '#FFE9A8' : '#FFD978'} opacity=".95" />
+    ))}
+  </g>
+
+  <!-- 4: Vitral central e interiores -->
+  <g class="h-vitral reveal">
+    <circle cx={vitral.cx} cy={vitral.cy} r="21" fill="#fff" stroke="#1D2B4F" stroke-width="2.5" />
+    {wedges.map((w) => <path d={w.d} fill={w.color} stroke="#1D2B4F" stroke-width="1.2" />)}
+    <circle cx={vitral.cx} cy={vitral.cy} r="5" fill="#FFD400" stroke="#1D2B4F" stroke-width="1.5" />
+    <!-- Cocina: olla de sancocho -->
+    <rect x="137" y="296" width="18" height="10" rx="3" fill="#5B6573" />
+    <path d="M140 294 q2 -6 0 -10 M146 294 q2 -6 0 -10 M152 294 q2 -6 0 -10" stroke="#fff" stroke-width="1.6" fill="none" />
+    <!-- Habitación: cama -->
+    <rect x="262" y="298" width="24" height="8" rx="2" fill="#2F80ED" />
+    <rect x="262" y="294" width="8" height="5" rx="2" fill="#fff" />
+  </g>
+
+  <!-- 1: Cubierta y jardín de la azotea -->
+  <g class="h-roof reveal">
+    <rect x="104" y="72" width="212" height="10" fill="#C9774F" stroke="#1D2B4F" stroke-width="2" />
+    <path d="M110 72 V58 M310 72 V58 M110 60 H310" stroke="#1D2B4F" stroke-width="2" fill="none" />
+    <path d="M140 72 V60 M170 72 V60 M200 72 V60 M230 72 V60 M260 72 V60 M290 72 V60" stroke="#1D2B4F" stroke-width="1.2" />
+    <rect x="118" y="62" width="44" height="10" rx="2" fill="#8D5A3B" />
+    <circle cx="126" cy="60" r="7" fill="#4CAF50" />
+    <circle cx="140" cy="57" r="8" fill="#66BB6A" />
+    <circle cx="154" cy="60" r="7" fill="#4CAF50" />
+    <circle cx="140" cy="54" r="3" fill="#FFD400" />
+    <rect x="258" y="62" width="44" height="10" rx="2" fill="#8D5A3B" />
+    <circle cx="266" cy="59" r="7" fill="#66BB6A" />
+    <circle cx="280" cy="56" r="9" fill="#4CAF50" />
+    <circle cx="294" cy="59" r="7" fill="#66BB6A" />
+    <circle cx="268" cy="55" r="3" fill="#F06292" />
+    <path d="M210 72 V40" stroke="#8D5A3B" stroke-width="4" />
+    <circle cx="210" cy="36" r="14" fill="#43A047" stroke="#1D2B4F" stroke-width="1.5" />
+  </g>
+
+  <!-- Andamio -->
+  <g class="h-scaffold">
+    <path
+      d="M84 96 V320 M104 96 V320 M84 140 H104 M84 200 H104 M84 260 H104 M84 140 L104 200 M104 200 L84 260 M84 260 L104 320"
+      stroke="#5B6573"
+      stroke-width="3"
+    />
+    <rect x="80" y="136" width="30" height="5" fill="#C68B4E" />
+    <rect x="80" y="196" width="30" height="5" fill="#C68B4E" />
+    <rect x="80" y="256" width="30" height="5" fill="#C68B4E" />
+    <g class="h-bucket">
+      <rect x="88" y="244" width="12" height="12" rx="2" fill="#E53935" stroke="#1D2B4F" stroke-width="1.5" />
+    </g>
+  </g>
+
+  <!-- Cerca de obra -->
+  <g class="h-fence">
+    {Array.from({ length: 19 }, (_, i) => (
+      <rect x={14 + i * 21} y="302" width="19" height="22" fill={i % 2 ? '#FF7043' : '#fff'} stroke="#1D2B4F" stroke-width="1.5" />
+    ))}
+    <rect x="12" y="300" width="398" height="4" fill="#1D2B4F" />
+  </g>
+
+  <!-- 5: Hogar listo -->
+  <g class="h-final reveal">
+    <rect x="162" y="262" width="96" height="14" rx="4" fill="#FFD400" stroke="#1D2B4F" stroke-width="2" />
+    <text x="210" y="273" text-anchor="middle" font-family="'Baloo 2', system-ui, sans-serif" font-weight="800" font-size="10" fill="#C62828">
+      LA SUPERCASA
+    </text>
+    <path d="M110 50 Q210 64 310 50" stroke="#1D2B4F" stroke-width="1.2" fill="none" />
+    {lightBulbs.map((b) => <circle class="h-bulb" cx={b.x} cy={b.y} r="3.4" fill={b.color} />)}
+    <g class="h-family">
+      <circle cx="52" cy="270" r="9" fill="#F7C9A6" stroke="#1D2B4F" stroke-width="2" />
+      <path d="M42 282 Q52 276 62 282 L64 316 H40 Z" fill="#8E5CC9" stroke="#1D2B4F" stroke-width="2" />
+      <circle cx="76" cy="290" r="8" fill="#F7C9A6" stroke="#1D2B4F" stroke-width="2" />
+      <path d="M70 288 h12 l-2 -3 h-8 z" fill="#4CAF50" />
+      <path d="M68 300 Q76 296 84 300 L84 318 H68 Z" fill="#2F80ED" stroke="#1D2B4F" stroke-width="2" />
+      <path d="M66 300 L58 312 L58 324 L72 318 Z" fill="#E53935" opacity=".9" />
+      <path d="M62 290 L70 300" stroke="#1D2B4F" stroke-width="3" stroke-linecap="round" />
+    </g>
+    {confetti.map((c) => <polygon class="h-star" points={starPoints(c.x, c.y, c.s)} fill={c.c} />)}
+  </g>
+</svg>
+
+<style>
+  .house {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+  }
+  .reveal {
+    opacity: 0;
+    transform: translateY(10px);
+    transition:
+      opacity 1.2s ease,
+      transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .h-crane,
+  .h-scaffold,
+  .h-fence,
+  .h-rebar {
+    transition:
+      opacity 1.2s ease,
+      transform 1.2s ease;
+  }
+
+  .is-l1 .h-roof,
+  .is-l2 .h-facade,
+  .is-l3 .h-glow,
+  .is-l4 .h-vitral,
+  .is-l5 .h-final {
+    opacity: 1;
+    transform: none;
+  }
+  .is-l1 .h-rebar {
+    opacity: 0;
+  }
+  .is-l5 .h-crane {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  .is-l5 .h-scaffold,
+  .is-l5 .h-fence {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  /* Obra en movimiento (≥15%) */
+  .h-hook,
+  .h-bucket {
+    transform-box: view-box;
+  }
+  .is-active .h-hook {
+    transform-origin: 236px 46px;
+    animation: swing 3.2s ease-in-out infinite;
+  }
+  .is-active .h-bucket {
+    animation: lift 4s ease-in-out infinite;
+  }
+  .is-l5 .h-bulb {
+    animation: twinkle 1.6s ease-in-out infinite alternate;
+  }
+  .is-l5 .h-bulb:nth-of-type(2n) {
+    animation-delay: 0.8s;
+  }
+  .is-l5 .h-star {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: float 3s ease-in-out infinite;
+  }
+  .is-l5 .h-family {
+    animation: arrive 1.5s ease-out both;
+  }
+
+  /* Pequeño salto al cruzar un umbral */
+  .house.is-building {
+    animation: build 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes swing {
+    0%,
+    100% {
+      transform: rotate(-5deg);
+    }
+    50% {
+      transform: rotate(5deg);
+    }
+  }
+  @keyframes lift {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-110px);
+    }
+  }
+  @keyframes twinkle {
+    from {
+      opacity: 0.45;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0) rotate(0);
+    }
+    50% {
+      transform: translateY(-6px) rotate(20deg);
+    }
+  }
+  @keyframes arrive {
+    from {
+      transform: translateX(-60px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+  @keyframes build {
+    0% {
+      transform: scale(1);
+    }
+    30% {
+      transform: scale(0.96, 1.04);
+    }
+    60% {
+      transform: scale(1.03, 0.97);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .h-crane,
+    .h-scaffold,
+    .h-fence {
+      transition-duration: 0.01s;
+    }
+    .house *,
+    .house.is-building {
+      animation: none !important;
+    }
+  }
+</style>

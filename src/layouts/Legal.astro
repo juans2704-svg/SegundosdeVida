@@ -1,0 +1,36 @@
+---
+import Base from './Base.astro';
+
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+
+<Base title={`${title} · La SUPERCASA`}>
+  <main class="wrap legal">
+    <p><a href="/">← Volver a la SUPERCASA</a></p>
+    <h1>{title}</h1>
+    <p class="pending">
+      📝 Documento pendiente: la Fundación Segundos de Vida debe entregar el texto oficial antes del lanzamiento.
+    </p>
+    <slot />
+  </main>
+</Base>
+
+<style>
+  .legal {
+    max-width: 760px;
+    padding-block: 48px 80px;
+  }
+  .legal h1 {
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+  }
+  .pending {
+    padding: 1rem 1.2rem;
+    border: 3px dashed var(--ink);
+    border-radius: 16px;
+    background: var(--yellow-soft);
+    font-weight: 700;
+  }
+</style>

@@ -1,0 +1,175 @@
+---
+import { campaign, stages } from '../../config/campaign';
+import { getInitialProgress, percentOf, visualPercent, currentStage } from '../../lib/progress';
+import { formatCOP, formatUSD, copToUSD } from '../../lib/format';
+import t from '../../i18n/es';
+
+const progress = getInitialProgress();
+const pct = percentOf(progress);
+const now = currentStage(pct);
+---
+
+<div class="progress" data-progress>
+  <p class="now">
+    <span>{t.hero.nowBuilding}</span>
+    <strong data-now-building>{now.icon} {now.name}</strong>
+  </p>
+
+  <div
+    class="bar"
+    role="progressbar"
+    aria-label="Avance de la recaudación"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    aria-valuenow={Math.round(pct)}
+    data-progress-bar
+  >
+    <div class="bar__fill" style={`width:${visualPercent(pct)}%`} data-progress-fill>
+      <span class="bar__pct" data-progress-pct>{Math.round(pct)}%</span>
+    </div>
+    {stages.slice(1).map((s) => <span class="bar__tick" style={`left:${s.threshold}%`} aria-hidden="true" />)}
+  </div>
+
+  <div class="amounts" aria-live="polite">
+    <p>
+      <strong class="raised" data-progress-raised>{formatCOP(progress.raised)}</strong>
+      <span> {t.progress.raised}</span>
+    </p>
+    <p class="goal">
+      {t.progress.goal} <strong>{formatCOP(campaign.goal)}</strong>
+      <span class="usd">≈ {formatUSD(copToUSD(campaign.goal))}</span>
+    </p>
+  </div>
+  <p class="heroes" data-heroes>
+    {progress.heroes > 0 ? t.progress.heroes(progress.heroes) : t.progress.firstHero}
+  </p>
+
+  <ol class="chips" aria-label="Etapas de la obra">
+    {
+      stages.map((s, i) => {
+        const state = i === 0 || pct >= s.threshold ? 'done' : s.id === now.id ? 'current' : 'todo';
+        return (
+          <li class={`chip chip--${state}`} data-stage-chip={s.id}>
+            <span aria-hidden="true">{s.icon}</span> {s.name}
+            {i === 0 && <span class="chip__note">({t.progress.done})</span>}
+          </li>
+        );
+      })
+    }
+  </ol>
+</div>
+
+<style>
+  .progress {
+    display: grid;
+    gap: 0.6rem;
+  }
+  .now {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    justify-self: start;
+    margin: 0;
+    padding: 0.3rem 0.9rem;
+    border: 2.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--yellow);
+    font-weight: 700;
+  }
+  .bar {
+    position: relative;
+    height: 34px;
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+    background: var(--white);
+    overflow: hidden;
+  }
+  .bar__fill {
+    position: relative;
+    height: 100%;
+    min-width: 44px;
+    border-radius: 999px;
+    background: repeating-linear-gradient(-45deg, var(--green) 0 14px, #66bb6a 14px 28px);
+    background-size: 40px 40px;
+    animation: stripes 1.4s linear infinite;
+    transition: width 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .bar__pct {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--ink);
+  }
+  .bar__tick {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    background: rgb(29 43 79 / 0.25);
+  }
+  .amounts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.25rem 1rem;
+  }
+  .amounts p {
+    margin: 0;
+  }
+  .raised {
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+  .goal {
+    color: var(--ink-soft);
+  }
+  .usd {
+    font-size: 0.9rem;
+  }
+  .heroes {
+    margin: 0;
+    font-weight: 700;
+    color: var(--green-text);
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.3rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .chip {
+    padding: 0.2rem 0.7rem;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    background: var(--white);
+    transition: background 0.4s;
+  }
+  .chip--done {
+    background: #c8efca;
+  }
+  .chip--current {
+    background: var(--yellow);
+    box-shadow: 0 3px 0 var(--ink);
+  }
+  .chip--todo {
+    border-style: dashed;
+    color: var(--ink-soft);
+  }
+  .chip__note {
+    font-weight: 500;
+  }
+  @keyframes stripes {
+    to {
+      background-position: 40px 0;
+    }
+  }
+</style>

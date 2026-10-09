@@ -1,0 +1,625 @@
+---
+import SuperCalvito from '../characters/SuperCalvito.astro';
+import SpeechBubble from '../ui/SpeechBubble.astro';
+import { pieces } from '../../config/campaign';
+import { payments } from '../../config/payments';
+import { formatCOP, formatUSD, copToUSD } from '../../lib/format';
+import t from '../../i18n/es';
+
+const d = t.donate;
+---
+
+<section class="section donate" id="donar" aria-labelledby="donate-title">
+  <div class="wrap">
+    <div class="donate__intro" data-reveal>
+      <div class="donate__calvito">
+        <SuperCalvito who="calvito" accessory="helmet" label="Calvito con casco amarillo de constructor." />
+      </div>
+      <div>
+        <p class="eyebrow">{d.eyebrow}</p>
+        <h2 id="donate-title" class="visually-hidden">{d.eyebrow}</h2>
+        <SpeechBubble html={d.speech} tail="left" />
+      </div>
+    </div>
+
+    <form class="flow card" data-donate novalidate>
+      <fieldset class="region">
+        <legend>{d.region.legend}</legend>
+        <label class="pill">
+          <input type="radio" name="region" value="co" checked />
+          <span>{d.region.co}</span>
+        </label>
+        <label class="pill">
+          <input type="radio" name="region" value="intl" />
+          <span>{d.region.intl}</span>
+        </label>
+      </fieldset>
+
+      <ol class="stepper" aria-label="Pasos">
+        {
+          d.steps.map((s, i) => (
+            <li data-stepper-item={i + 1} class={i === 0 ? 'is-current' : ''}>
+              <span class="stepper__n">{i + 1}</span> {s}
+            </li>
+          ))
+        }
+      </ol>
+
+      <!-- Paso A: elige tu pieza -->
+      <div class="step" data-step="1" tabindex="-1">
+        <fieldset class="pieces">
+          <legend class="visually-hidden">{d.steps[0]}</legend>
+          {
+            pieces.map((p) => (
+              <label class:list={['piece', { 'piece--rec': p.recommended }]}>
+                <input type="radio" name="piece" value={p.id} checked={p.recommended} />
+                <span class="piece__icon" aria-hidden="true">
+                  {p.icon}
+                </span>
+                <span class="piece__label">{p.label}</span>
+                {p.amount !== null ? (
+                  <span class="piece__price" data-price={p.amount}>
+                    <strong data-price-main>{formatCOP(p.amount)}</strong>
+                    <small data-price-alt>
+                      {d.approx} {formatUSD(copToUSD(p.amount))}
+                    </small>
+                  </span>
+                ) : (
+                  <span class="piece__price">
+                    <strong>✏️</strong>
+                  </span>
+                )}
+                {p.recommended && <span class="piece__badge">⭐ {d.recommended}</span>}
+              </label>
+            ))
+          }
+        </fieldset>
+
+        <div class="custom" data-custom hidden>
+          <label for="custom-amount">{d.customLabel}</label>
+          <div class="custom__input">
+            <span data-custom-currency>COP $</span>
+            <input
+              id="custom-amount"
+              name="custom"
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="80.000"
+              aria-describedby="custom-error"
+            />
+          </div>
+          <p class="error" id="custom-error" data-error="custom" aria-live="polite"></p>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn--primary" data-next="2">{d.next}</button>
+        </div>
+      </div>
+
+      <!-- Paso B: frecuencia y datos -->
+      <div class="step" data-step="2" tabindex="-1" hidden>
+        <fieldset class="frequency">
+          <legend>{d.frequency.legend}</legend>
+          <label class="pill pill--big">
+            <input type="radio" name="frequency" value="once" checked />
+            <span>{d.frequency.once}</span>
+          </label>
+          <label class="pill pill--big">
+            <input type="radio" name="frequency" value="monthly" />
+            <span>
+              {d.frequency.monthly}
+              <small>{d.frequency.monthlyHelp}</small>
+            </span>
+          </label>
+        </fieldset>
+
+        <div class="fields">
+          <div class="field">
+            <label for="donor-name">{d.fields.name}</label>
+            <input
+              id="donor-name"
+              name="name"
+              type="text"
+              autocomplete="name"
+              maxlength="40"
+              placeholder={d.fields.namePlaceholder}
+              aria-describedby="name-help"
+            />
+            <small id="name-help">{d.fields.nameHelp}</small>
+          </div>
+          <div class="field">
+            <label for="donor-email">{d.fields.email} *</label>
+            <input
+              id="donor-email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              required
+              aria-describedby="email-help email-error"
+            />
+            <small id="email-help">{d.fields.emailHelp}</small>
+            <p class="error" id="email-error" data-error="email" aria-live="polite"></p>
+          </div>
+          <div class="field">
+            <label for="donor-phone">{d.fields.phone}</label>
+            <input id="donor-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" />
+          </div>
+        </div>
+
+        <label class="check">
+          <input type="checkbox" name="consent" required aria-describedby="consent-error" />
+          <span set:html={d.fields.consent} />
+        </label>
+        <p class="error" id="consent-error" data-error="consent" aria-live="polite"></p>
+        <label class="check">
+          <input type="checkbox" name="wall" />
+          <span>{d.fields.wall}</span>
+        </label>
+
+        <div class="actions">
+          <button type="button" class="btn btn--ghost" data-prev="1">{d.back}</button>
+          <button type="button" class="btn btn--primary" data-next="3">{d.toConfirm}</button>
+        </div>
+      </div>
+
+      <!-- Paso C/D: impacto y confirmación -->
+      <div class="step" data-step="3" tabindex="-1" hidden>
+        <div class="confirm">
+          <div class="confirm__calvita">
+            <SuperCalvito who="calvita" accessory="roller" label="Calvita con un rodillo de pintura." />
+          </div>
+          <SpeechBubble html={d.confirm.speech} tail="left" tone="yellow" />
+        </div>
+
+        <div class="summary">
+          <p class="summary__label">{d.confirm.summary}</p>
+          <p class="summary__piece" data-summary-piece></p>
+          <p class="summary__amount" data-summary-amount></p>
+          <ul class="impact" data-impact></ul>
+          <p class="summary__pay">
+            {d.confirm.payWith} <strong data-summary-provider></strong>
+            <small data-summary-methods></small>
+          </p>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn--ghost" data-prev="2">{d.confirm.back}</button>
+          <button type="submit" class="btn btn--primary btn--xl" data-confirm>{d.confirm.cta}</button>
+        </div>
+        <p class="secure">{d.confirm.secure}</p>
+      </div>
+
+      <!-- Resultado: pendiente / rechazado / error -->
+      <div class="step result" data-step="result" tabindex="-1" hidden>
+        <div class="result__calvita">
+          <SuperCalvito who="calvita" label="Calvita sonríe." />
+        </div>
+        <div>
+          <p class="result__msg" data-result-msg aria-live="assertive"></p>
+          <div class="actions">
+            <button type="button" class="btn btn--primary" data-retry hidden>{d.retry}</button>
+            <button type="button" class="btn btn--white" data-restart>{d.restart}</button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    {
+      payments.mode === 'demo' && (
+        <p class="demo-note">
+          🧪 <strong>{t.demo.title}:</strong> los pagos están simulados. Agrega <code>?demo=1</code> a la URL para ver
+          todas las etapas de la casa.
+        </p>
+      )
+    }
+  </div>
+
+  <dialog class="demo card" data-demo-dialog aria-labelledby="demo-title">
+    <h3 id="demo-title">🧪 {t.demo.title}</h3>
+    <p data-demo-body></p>
+    <div class="demo__btns">
+      <button type="button" class="btn btn--primary" data-demo-result="approved">{t.demo.approved}</button>
+      <button type="button" class="btn btn--yellow" data-demo-result="pending">{t.demo.pending}</button>
+      <button type="button" class="btn btn--white" data-demo-result="declined">{t.demo.declined}</button>
+      <button type="button" class="btn btn--white" data-demo-result="error">{t.demo.error}</button>
+      <button type="button" class="btn btn--ghost" data-demo-result="cancel">{t.demo.cancel}</button>
+    </div>
+  </dialog>
+</section>
+
+<style>
+  .donate {
+    background: linear-gradient(180deg, var(--yellow-soft) 0%, var(--cream) 100%);
+  }
+  .donate__intro {
+    display: grid;
+    grid-template-columns: minmax(110px, 180px) 1fr;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 860px;
+    margin: 0 auto 2.5rem;
+  }
+  .flow {
+    max-width: 860px;
+    margin-inline: auto;
+    padding: clamp(18px, 4vw, 40px);
+  }
+  fieldset {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+  legend {
+    margin-bottom: 0.6rem;
+    font-weight: 800;
+    font-size: 1.15rem;
+  }
+  .region {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 1.4rem;
+  }
+  .pill {
+    position: relative;
+  }
+  .pill input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    cursor: pointer;
+  }
+  .pill span {
+    display: flex;
+    flex-direction: column;
+    min-height: 48px;
+    justify-content: center;
+    padding: 0.45rem 1.1rem;
+    border: 2.5px solid var(--ink);
+    border-radius: 999px;
+    background: var(--white);
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .pill--big span {
+    border-radius: 18px;
+    padding: 0.8rem 1.2rem;
+    font-size: 1.1rem;
+  }
+  .pill small {
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+  .pill input:checked + span {
+    background: var(--yellow);
+    box-shadow: 0 4px 0 var(--ink);
+  }
+  .pill input:focus-visible + span {
+    outline: 4px solid var(--blue);
+    outline-offset: 2px;
+  }
+  .stepper {
+    display: flex;
+    gap: 0.5rem;
+    margin: 0 0 1.4rem;
+    padding: 0;
+    list-style: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+  }
+  .stepper li {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 1;
+    padding-bottom: 0.4rem;
+    border-bottom: 4px solid #e2e6ee;
+  }
+  .stepper li.is-current,
+  .stepper li.is-done {
+    color: var(--ink);
+    border-color: var(--green);
+  }
+  .stepper__n {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    font-size: 0.85rem;
+  }
+  .is-current .stepper__n {
+    background: var(--yellow);
+  }
+  .step:focus {
+    outline: none;
+  }
+  .pieces {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+    gap: 0.9rem;
+  }
+  .piece {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      'icon label'
+      'icon price';
+    align-items: center;
+    column-gap: 0.8rem;
+    padding: 1rem;
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    background: var(--white);
+    cursor: pointer;
+    transition:
+      transform 0.15s,
+      background 0.2s,
+      box-shadow 0.15s;
+  }
+  .piece:hover {
+    transform: translateY(-2px);
+  }
+  .piece input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    cursor: pointer;
+  }
+  .piece:has(input:checked) {
+    background: var(--yellow);
+    box-shadow: 0 5px 0 var(--ink);
+  }
+  .piece:has(input:focus-visible) {
+    outline: 4px solid var(--blue);
+    outline-offset: 3px;
+  }
+  .piece--rec {
+    padding-top: 1.5rem;
+  }
+  .piece__icon {
+    grid-area: icon;
+    font-size: 2.3rem;
+  }
+  .piece__label {
+    grid-area: label;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+  .piece__price {
+    grid-area: price;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.4rem;
+  }
+  .piece__price strong {
+    font-size: 1.25rem;
+    color: var(--red-text);
+  }
+  .piece__price small {
+    color: var(--ink-soft);
+  }
+  .piece__badge {
+    position: absolute;
+    top: -12px;
+    left: 12px;
+    padding: 0 0.6rem;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--green);
+    color: var(--ink);
+    font-size: 0.8rem;
+    font-weight: 800;
+  }
+  .custom {
+    margin-top: 1.2rem;
+  }
+  .custom label,
+  .field label {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-weight: 800;
+  }
+  .custom__input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 320px;
+    padding-left: 1rem;
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    background: var(--white);
+    font-weight: 800;
+  }
+  .custom__input input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    border-radius: 0 14px 14px 0;
+  }
+  input[type='text'],
+  input[type='email'],
+  input[type='tel'] {
+    width: 100%;
+    min-height: 50px;
+    padding: 0.6rem 0.9rem;
+    border: 3px solid var(--ink);
+    border-radius: 14px;
+    font: inherit;
+    font-size: 1.1rem;
+    color: var(--ink);
+    background: var(--white);
+  }
+  .custom__input input {
+    border: 0;
+  }
+  input[aria-invalid='true'] {
+    border-color: var(--red-strong);
+    background: #fff3f2;
+  }
+  .error {
+    min-height: 1.2em;
+    margin: 0.3rem 0 0;
+    color: var(--red-text);
+    font-weight: 700;
+  }
+  .error:empty {
+    min-height: 0;
+  }
+  .frequency {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.8rem;
+    margin-bottom: 1.6rem;
+  }
+  .frequency legend {
+    grid-column: 1 / -1;
+  }
+  .fields {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.2rem;
+  }
+  .field small {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+  }
+  .check {
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+    margin-top: 0.8rem;
+    font-size: 0.98rem;
+    cursor: pointer;
+  }
+  .check input {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    margin-top: 2px;
+    accent-color: var(--green-text);
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap-reverse;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    margin-top: 1.8rem;
+  }
+  .actions .btn--primary:only-child {
+    margin-left: auto;
+  }
+  .btn--xl {
+    font-size: 1.3rem;
+    min-height: 60px;
+    padding-inline: 2rem;
+  }
+  .confirm,
+  .result {
+    display: grid;
+    grid-template-columns: minmax(100px, 150px) 1fr;
+    align-items: center;
+    gap: 1.2rem;
+  }
+  .summary {
+    margin-top: 1.6rem;
+    padding: 1.2rem 1.4rem;
+    border: 3px dashed var(--ink);
+    border-radius: 18px;
+    background: var(--sky-light);
+  }
+  .summary p {
+    margin: 0;
+  }
+  .summary__label {
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+  .summary__piece {
+    font-size: 1.5rem;
+    font-weight: 800;
+  }
+  .summary__amount {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--red-text);
+  }
+  .impact {
+    margin: 0.9rem 0;
+    padding: 0;
+    list-style: none;
+  }
+  .impact li {
+    position: relative;
+    padding-left: 1.8rem;
+    margin-bottom: 0.3rem;
+  }
+  .impact li::before {
+    content: '⭐';
+    position: absolute;
+    left: 0;
+  }
+  .summary__pay small {
+    display: block;
+    color: var(--ink-soft);
+  }
+  .secure {
+    margin: 1rem 0 0;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    text-align: right;
+  }
+  .result__msg {
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+  .demo-note {
+    max-width: 860px;
+    margin: 1.2rem auto 0;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+  .demo {
+    width: min(92vw, 460px);
+    padding: 1.5rem;
+    color: var(--ink);
+  }
+  .demo::backdrop {
+    background: rgb(29 43 79 / 0.55);
+  }
+  .demo__btns {
+    display: grid;
+    gap: 0.6rem;
+  }
+  @media (max-width: 560px) {
+    .donate__intro,
+    .confirm,
+    .result {
+      grid-template-columns: 1fr;
+    }
+    .donate__calvito,
+    .confirm__calvita,
+    .result__calvita {
+      width: 120px;
+    }
+    .actions .btn--primary {
+      width: 100%;
+    }
+    .stepper {
+      font-size: 0.8rem;
+    }
+    .secure {
+      text-align: left;
+    }
+  }
+</style>

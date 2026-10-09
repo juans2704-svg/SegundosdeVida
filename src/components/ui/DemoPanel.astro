@@ -1,0 +1,48 @@
+---
+import t from '../../i18n/es';
+---
+
+<!-- Solo visible con ?demo=1 (src/scripts/progress.ts) -->
+<aside class="demo-panel card" data-demo-panel hidden aria-labelledby="demo-panel-title">
+  <p id="demo-panel-title"><strong>🧪 {t.demo.panelTitle}</strong></p>
+  <p class="help">{t.demo.panelHelp}</p>
+  <label class="row">
+    <span class="visually-hidden">Porcentaje de recaudo</span>
+    <input type="range" min="0" max="100" value="0" />
+    <output>0%</output>
+  </label>
+</aside>
+
+<style>
+  .demo-panel {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 70;
+    width: min(calc(100vw - 32px), 300px);
+    padding: 0.9rem 1rem;
+    font-size: 0.95rem;
+  }
+  .demo-panel p {
+    margin: 0;
+  }
+  .help {
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.4rem;
+  }
+  input {
+    flex: 1;
+    accent-color: var(--red-strong);
+  }
+  output {
+    min-width: 3.2em;
+    font-weight: 800;
+    text-align: right;
+  }
+</style>

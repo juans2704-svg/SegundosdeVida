@@ -1,0 +1,82 @@
+---
+import { foundation } from '../../config/campaign';
+import t from '../../i18n/es';
+
+const f = t.footer;
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="wrap footer__grid">
+    <div>
+      <p class="footer__brand">⭐ La SUPERCASA</p>
+      <p>{f.legal} · NIT {foundation.nit}</p>
+      <p class="small">
+        {f.rights} <a href={`mailto:${foundation.email}`}>{foundation.email}</a>.
+      </p>
+    </div>
+    <nav aria-label="Legal">
+      <ul>
+        <li><a href="/politica-de-datos">{f.privacy}</a></li>
+        <li><a href="/terminos">{f.terms}</a></li>
+        <li>
+          {f.treasury}: <a href={`mailto:${foundation.treasuryEmail}`}>{foundation.treasuryEmail}</a>
+        </li>
+        <li><a href={foundation.website} target="_blank" rel="noopener">segundosdevida.com</a></li>
+      </ul>
+    </nav>
+    <nav aria-label={f.follow}>
+      <p class="footer__label">{f.follow}</p>
+      <ul class="social">
+        <li><a href={foundation.social.instagram} target="_blank" rel="noopener">Instagram</a></li>
+        <li><a href={foundation.social.facebook} target="_blank" rel="noopener">Facebook</a></li>
+        <li><a href={foundation.social.tiktok} target="_blank" rel="noopener">TikTok</a></li>
+        <li><a href={foundation.social.whatsapp} target="_blank" rel="noopener">WhatsApp</a></li>
+      </ul>
+    </nav>
+  </div>
+  <p class="wrap small copy">© {year} {foundation.name}</p>
+</footer>
+
+<style>
+  .footer {
+    padding-block: 56px 32px;
+    background: var(--ink);
+    color: #e9eefa;
+  }
+  .footer a {
+    color: var(--yellow);
+  }
+  .footer__grid {
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 800px) {
+    .footer__grid {
+      grid-template-columns: 1.4fr 1fr 0.8fr;
+    }
+  }
+  .footer__brand {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--white);
+  }
+  .footer__label {
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+  }
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .small {
+    font-size: 0.9rem;
+    opacity: 0.85;
+  }
+  .copy {
+    margin-top: 2rem;
+  }
+</style>
