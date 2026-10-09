@@ -5,6 +5,7 @@
 import { campaign, stages } from '../config/campaign';
 import { getInitialProgress, percentOf, visualPercent, houseLevel, currentStage, type Progress } from '../lib/progress';
 import { formatCOP } from '../lib/format';
+import { payments } from '../config/payments';
 import t from '../i18n/es';
 
 let state: Progress = getInitialProgress();
@@ -109,10 +110,11 @@ export function addDonation(amountCOP: number) {
   render({ ...state, raised: state.raised + amountCOP, heroes: state.heroes + 1 });
 }
 
-/** Vista previa `?demo=1`: mueve la casa entre 0 y 100%. */
+/** Vista previa: mueve la casa entre 0 y 100%. */
 function initDemoPanel() {
   const panel = $('[data-demo-panel]');
-  if (!panel || !new URLSearchParams(location.search).has('demo')) return;
+  // Visible mientras los pagos estén en modo demo, o con ?demo=1.
+  if (!panel || (payments.mode !== 'demo' && !new URLSearchParams(location.search).has('demo'))) return;
   panel.hidden = false;
   const range = panel.querySelector<HTMLInputElement>('input')!;
   const out = panel.querySelector<HTMLOutputElement>('output')!;

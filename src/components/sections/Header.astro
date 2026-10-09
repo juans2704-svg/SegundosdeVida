@@ -41,7 +41,7 @@ import t from '../../i18n/es';
   }
   .header {
     position: sticky;
-    top: 0;
+    top: env(safe-area-inset-top, 0px);
     z-index: 50;
     background: rgb(110 193 240 / 0.92);
     backdrop-filter: blur(8px);
