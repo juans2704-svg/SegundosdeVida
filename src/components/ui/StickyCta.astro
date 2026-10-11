@@ -1,0 +1,50 @@
+---
+import t from '../../i18n/es';
+---
+
+<!-- Barra fija en celular: aparece al pasar los botones de la portada y se oculta en la sección de donación -->
+<div class="sticky-cta" data-sticky-cta hidden>
+  <a class="btn btn--primary" href="#donar">{t.donate.sticky}</a>
+</div>
+
+<script>
+  const bar = document.querySelector<HTMLElement>('[data-sticky-cta]');
+  const heroCta = document.querySelector('[data-hero-cta]');
+  const donate = document.querySelector('#donar');
+  const thanks = document.querySelector('#gracias');
+  if (bar && heroCta && donate && 'IntersectionObserver' in window) {
+    const seen = new Map<Element, boolean>();
+    const update = () => {
+      const heroVisible = seen.get(heroCta) ?? true;
+      const inDonate = seen.get(donate) || seen.get(thanks!) || false;
+      bar.hidden = heroVisible || inDonate;
+    };
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => seen.set(e.target, e.isIntersecting));
+      update();
+    });
+    [heroCta, donate, thanks].forEach((el) => el && io.observe(el));
+  }
+</script>
+
+<style>
+  .sticky-cta {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: rgb(255 246 199 / 0.96);
+    border-top: 3px solid var(--ink);
+    backdrop-filter: blur(6px);
+  }
+  .sticky-cta .btn {
+    width: 100%;
+  }
+  @media (min-width: 900px) {
+    .sticky-cta {
+      display: none !important;
+    }
+  }
+</style>

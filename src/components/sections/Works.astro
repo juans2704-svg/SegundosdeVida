@@ -1,5 +1,5 @@
 ---
-import { campaign, stages } from '../../config/campaign';
+import { campaign } from '../../config/campaign';
 import { houseRender } from '../../config/characters';
 import { houseFrames, frameSrc, frameSrcset } from '../../config/house';
 
@@ -65,25 +65,6 @@ import t from '../../i18n/es';
     </figure>
   </div>
 
-  <div class="wrap">
-    <h3 class="stages-title">{t.works.stagesTitle}</h3>
-    <ol class="stages">
-      {
-        stages.map((s) => (
-          <li class="stage card" data-reveal>
-            <span class="stage__icon" aria-hidden="true">
-              {s.icon}
-            </span>
-            <div>
-              <h4>{s.name}</h4>
-              <p>{s.description}</p>
-            </div>
-            <span class="stage__pct">{s.budgetPct}%</span>
-          </li>
-        ))
-      }
-    </ol>
-  </div>
 </section>
 
 <script>
@@ -219,41 +200,5 @@ import t from '../../i18n/es';
   figcaption {
     font-size: 0.85rem;
     color: var(--ink-soft);
-  }
-  .stages-title {
-    margin-top: clamp(48px, 7vw, 80px);
-    font-size: clamp(1.5rem, 3vw, 2rem);
-  }
-  .stages {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1rem;
-    margin: 1.2rem 0 0;
-    padding: 0;
-    list-style: none;
-  }
-  .stage {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem 1.2rem;
-  }
-  .stage__icon {
-    font-size: 2rem;
-  }
-  .stage h4 {
-    margin: 0;
-    font-size: 1.15rem;
-  }
-  .stage p {
-    margin: 0;
-    font-size: 0.95rem;
-    color: var(--ink-soft);
-  }
-  .stage__pct {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: var(--red-text);
   }
 </style>

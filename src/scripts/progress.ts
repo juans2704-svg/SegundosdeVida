@@ -3,10 +3,20 @@
  * Fase 2: `refresh()` consultará Supabase (Realtime) en vez del archivo de configuración.
  */
 import { campaign, stages } from '../config/campaign';
-import { getInitialProgress, percentOf, visualPercent, houseLevel, currentStage, type Progress } from '../lib/progress';
+import {
+  getInitialProgress,
+  percentOf,
+  visualPercent,
+  houseLevel,
+  currentStage,
+  daysLeft,
+  nextMilestone,
+  showRaised,
+  type Progress,
+} from '../lib/progress';
 import { formatCOP } from '../lib/format';
 import { payments } from '../config/payments';
-import { houseFrames, frameFor, frameSrc, frameSrcset } from '../config/house';
+import { houseFrames, frameFor, frameSrc, frameSrcset, frameLabels } from '../config/house';
 import t from '../i18n/es';
 
 let state: Progress = getInitialProgress();
@@ -111,6 +121,22 @@ export function render(next: Progress, { announce = true } = {}) {
 
   const raised = $('[data-progress-raised]');
   if (raised) animateNumber(raised, prev.raised, next.raised);
+  const visible = showRaised(next.raised);
+  if (pctEl) pctEl.hidden = !visible;
+  const raisedWrap = $('[data-raised-wrap]');
+  if (raisedWrap) raisedWrap.hidden = !visible;
+  const launch = $('[data-launch]');
+  if (launch) launch.hidden = visible;
+
+  const milestone = nextMilestone(next);
+  const nextEl = $('[data-next]');
+  if (nextEl) {
+    nextEl.hidden = !milestone;
+    if (milestone) {
+      nextEl.querySelector('[data-next-label]')!.textContent = frameLabels[milestone.pct];
+      nextEl.querySelector('[data-next-missing]')!.textContent = t.progress.missing(formatCOP(milestone.missing));
+    }
+  }
 
   const heroes = $('[data-heroes]');
   if (heroes) heroes.textContent = next.heroes > 0 ? t.progress.heroes(next.heroes) : t.progress.firstHero;
@@ -184,5 +210,16 @@ function initReveal() {
   els.forEach((el) => io.observe(el));
 }
 
+/** La página es estática: recalcula los días que faltan al abrirla. */
+function initCountdown() {
+  const el = $('[data-countdown]');
+  if (!el) return;
+  const days = daysLeft();
+  const strong = el.querySelector('[data-days]');
+  if (days > 0 && strong) strong.textContent = t.progress.daysLeft(days);
+  else if (days === 0) el.textContent = t.progress.ended;
+}
+
 initReveal();
+initCountdown();
 initDemoPanel();

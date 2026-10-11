@@ -1,0 +1,57 @@
+---
+import { analyticsEnabled } from '../../config/analytics';
+import t from '../../i18n/es';
+---
+
+{
+  analyticsEnabled && (
+    <div class="cookies card" role="region" aria-label="Aviso de cookies" data-cookies hidden>
+      <p>
+        {t.cookies.text} <a href="/politica-de-datos">{t.cookies.more}</a>
+      </p>
+      <div class="cookies__btns">
+        <button type="button" class="btn btn--ghost" data-cookies-answer="no">
+          {t.cookies.reject}
+        </button>
+        <button type="button" class="btn btn--yellow" data-cookies-answer="yes">
+          {t.cookies.accept}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+<style>
+  .cookies {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    z-index: 90;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem 1rem;
+    max-width: 760px;
+    margin-inline: auto;
+    padding: 0.9rem 1.1rem;
+    font-size: 0.95rem;
+  }
+  .cookies p {
+    margin: 0;
+    flex: 1 1 260px;
+  }
+  .cookies__btns {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .cookies .btn {
+    min-height: 44px;
+    font-size: 1rem;
+    box-shadow: 0 3px 0 var(--ink);
+  }
+  .cookies .btn--ghost {
+    box-shadow: none;
+  }
+</style>

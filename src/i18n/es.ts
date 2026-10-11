@@ -26,10 +26,11 @@ const es = {
     badge: '🦸 MISIÓN SUPERCASA · BOGOTÁ',
     title: 'La casa que los Super Calvitos están construyendo contigo',
     speech:
-      '¡Hola! Soy <strong>Calvito</strong>. Lucho contra mi enfermedad con mi antifaz y mi capa de estrella 🦸 ¿Te cuento un secreto? Estamos construyendo <strong>mi casa</strong>, la SUPERCASA. Un lugar donde mis amigos y yo podremos quedarnos con nuestras mamás mientras dura el tratamiento. Pero nos falta algo muy importante: <strong>tú</strong>. ¿Me ayudas a terminarla?',
+      '¡Hola! Soy <strong>Calvito</strong> 🦸 Estamos construyendo <strong>mi casa</strong>, la SUPERCASA, para quedarnos con nuestras mamás mientras dura el tratamiento. Nos falta algo muy importante: <strong>tú</strong>. ¿Me ayudas a terminarla?',
     ctaPrimary: '🦸 Claro que sí, Calvito',
     ctaSecondary: '💛 ¿Quiénes son los Super Calvitos?',
     nowBuilding: 'Ahora construimos:',
+    lead: 'Cada pieza que pones se ve en la casa. Meta: tenerla lista el 30 de noviembre.',
     houseAlt:
       'Ilustración de la SUPERCASA. Su apariencia cambia a medida que avanza la recaudación.',
   },
@@ -39,6 +40,14 @@ const es = {
     goal: 'Meta',
     heroes: (n: number) => (n === 1 ? '1 héroe ya puso su pieza' : `${n} héroes ya pusieron su pieza`),
     firstHero: '¡Sé el primer héroe en poner una pieza!',
+    daysLeft: (n: number) => (n === 1 ? '¡Queda 1 día!' : `Quedan ${n} días`),
+    deadline: 'hasta el 30 de noviembre',
+    ended: 'La campaña terminó. ¡Gracias, héroes!',
+    next: 'Próxima pieza de la casa:',
+    missing: (amount: string) => `faltan ${amount}`,
+    launch: 'La campaña acaba de arrancar',
+    matching: (sponsor: string, until: string) =>
+      `⚡ Hasta el ${until}, ${sponsor} iguala cada pieza: tu aporte vale doble.`,
     done: 'lista',
   },
 
@@ -67,7 +76,6 @@ const es = {
     beforeNote: 'Obra gris, como está hoy',
     afterNote: 'Dibujo de la casa terminada',
     sliderLabel: 'Desliza para comparar la obra de hoy con la casa terminada',
-    stagesTitle: 'Las etapas de la SUPERCASA',
     whereTitle: '¿Por qué en Galerías?',
     where: [
       { icon: '🛡️', title: 'Seguro', text: 'Un barrio tranquilo para los niños y sus cuidadores.' },
@@ -87,6 +95,7 @@ const es = {
       intl: '🌎 Desde otro país',
     },
     steps: ['Tu pieza', 'Tus datos', 'Confirma'],
+    monthlyRecommended: 'La favorita de los padrinos',
     recommended: 'Calvito la recomienda',
     approx: 'aprox.',
     customLabel: '¿Cuánto quieres aportar?',
@@ -99,6 +108,8 @@ const es = {
       once: '🎁 Donación única',
       monthly: '💛 Plan Padrino mensual',
       monthlyHelp: 'Cada mes pones una pieza más.',
+      monthlyPrice: '/ mes',
+      monthlyNote: 'Puedes cancelarlo cuando quieras escribiendo a tesorería.',
     },
     fields: {
       name: 'Tu nombre o apodo de héroe',
@@ -112,6 +123,12 @@ const es = {
         'Autorizo a la Fundación Segundos de Vida a tratar mis datos según su <a href="/politica-de-datos" target="_blank" rel="noopener">política de tratamiento de datos</a> (Ley 1581 de 2012).',
       consentError: 'Necesitamos tu autorización para registrar tu aporte.',
       wall: 'Quiero que mi nombre aparezca en el muro de héroes.',
+      certificate: 'Necesito certificado de donación (persona o empresa).',
+      docType: 'Tipo de documento',
+      docTypes: { CC: 'Cédula de ciudadanía', NIT: 'NIT (empresa)', CE: 'Cédula de extranjería', PA: 'Pasaporte' },
+      docNumber: 'Número de documento',
+      docError: 'Escribe el número de documento para tu certificado.',
+      certificateName: 'Nombre o razón social para el certificado',
     },
     toConfirm: 'Ver el impacto de mi pieza →',
     confirm: {
@@ -123,6 +140,8 @@ const es = {
       cta: '✅ Confirmar con amor',
       back: '← cambiar mis datos',
       secure: '🔒 Tus datos de pago nunca pasan por nuestros servidores.',
+      fee: (amount: string) => `Sumar ${amount} para cubrir la comisión del pago y que tu pieza llegue completa.`,
+      total: 'Total',
     },
     pending:
       'Tu aporte está en camino 💛 Te avisaremos por email o WhatsApp cuando se confirme. Calvito ya está emocionado.',
@@ -134,6 +153,41 @@ const es = {
     cancelled: 'Tranquilo, tu pieza sigue guardada. Cuando quieras, confirmamos con amor 💛',
     retry: 'Intentar otra vez',
     restart: 'Poner otra pieza',
+    trust: [
+      { icon: '🛡️', text: 'Fundación sin ánimo de lucro' },
+      { icon: '🧾', text: 'Certificado de donación para personas y empresas' },
+      { icon: '🔒', text: 'Pago seguro con Wompi y PayPal' },
+      { icon: '📊', text: 'Informe público de cada peso' },
+    ],
+    shareTitle: '¿Hoy no puedes poner una pieza?',
+    shareBody: 'Compartir también construye. Si 3 amigos tuyos ven la casa de Calvito, uno puede ser el próximo héroe.',
+    shareCta: '💬 Compartir por WhatsApp',
+    shareCopy: '🔗 Copiar enlace',
+    shareCopied: '¡Enlace copiado!',
+    shareMessage: (link: string) =>
+      `Mira la casa que están construyendo los Super Calvitos 🏠🦸 Cada pieza se ve en la casa. ¿Me ayudas a que esté lista el 30 de noviembre? → ${link}`,
+    sticky: '🦸 Pon tu pieza',
+  },
+
+  companies: {
+    eyebrow: 'Empresas',
+    title: '¿Tu empresa quiere construir con nosotros?',
+    body: 'Patrocina una habitación, un piso o una etapa completa. Recibes certificado de donación y tu marca queda en el muro de héroes de la SUPERCASA.',
+    options: [
+      { icon: '🛏️', title: 'Una habitación', text: 'Equipada para un niño y su cuidador.' },
+      { icon: '🏢', title: 'Un piso', text: 'Habitaciones, baño y zonas comunes.' },
+      { icon: '🌿', title: 'Una etapa', text: 'Por ejemplo, el jardín de la azotea o la cocina.' },
+    ],
+    whatsapp: '💬 Hablemos por WhatsApp',
+    email: '✉️ Escríbenos',
+    message: 'Hola, quiero que mi empresa ponga una pieza en la SUPERCASA.',
+  },
+
+  cookies: {
+    text: 'Usamos cookies para medir cuántas personas visitan la casa de Calvito y mejorar la campaña.',
+    accept: 'Aceptar',
+    reject: 'No, gracias',
+    more: 'Política de datos',
   },
 
   demo: {

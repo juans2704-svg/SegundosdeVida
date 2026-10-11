@@ -1,0 +1,107 @@
+---
+import { foundation } from '../../config/campaign';
+import t from '../../i18n/es';
+
+const c = t.companies;
+const wa = foundation.whatsapp ? `https://wa.me/${foundation.whatsapp}?text=${encodeURIComponent(c.message)}` : '';
+const mail = `mailto:${foundation.email}?subject=${encodeURIComponent('Empresa — SUPERCASA')}&body=${encodeURIComponent(c.message)}`;
+---
+
+<section class="section companies" id="empresas" aria-labelledby="companies-title">
+  <div class="wrap companies__grid">
+    <div>
+      <p class="eyebrow">{c.eyebrow}</p>
+      <h2 id="companies-title">{c.title}</h2>
+      <p class="lead">{c.body}</p>
+      <div class="companies__ctas">
+        {
+          wa && (
+            <a class="btn btn--primary" href={wa} target="_blank" rel="noopener" data-company-cta>
+              {c.whatsapp}
+            </a>
+          )
+        }
+        <a class:list={['btn', wa ? 'btn--white' : 'btn--primary']} href={mail} data-company-cta>{c.email}</a>
+      </div>
+      <p class="companies__email">{foundation.email}</p>
+    </div>
+    <ul class="options">
+      {
+        c.options.map((o) => (
+          <li class="card option">
+            <span aria-hidden="true">{o.icon}</span>
+            <div>
+              <h3>{o.title}</h3>
+              <p>{o.text}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .companies {
+    background: var(--ink);
+    color: #eef2fb;
+  }
+  .companies h2 {
+    color: var(--white);
+  }
+  .companies__grid {
+    display: grid;
+    gap: 2rem 3rem;
+    align-items: center;
+  }
+  @media (min-width: 900px) {
+    .companies__grid {
+      grid-template-columns: 1.1fr 0.9fr;
+    }
+  }
+  .lead {
+    max-width: 52ch;
+    font-size: 1.15rem;
+  }
+  .companies__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 1.2rem;
+  }
+  .companies .btn {
+    border-color: var(--white);
+    box-shadow: 0 5px 0 #000;
+  }
+  .companies__email {
+    margin: 0.8rem 0 0;
+    font-size: 0.9rem;
+    opacity: 0.85;
+    user-select: all;
+  }
+  .options {
+    display: grid;
+    gap: 0.9rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .option {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 1.2rem;
+    color: var(--ink);
+  }
+  .option > span {
+    font-size: 2rem;
+  }
+  .option h3 {
+    margin: 0;
+    font-size: 1.15rem;
+  }
+  .option p {
+    margin: 0;
+    color: var(--ink-soft);
+  }
+</style>

@@ -1,18 +1,40 @@
 ---
 import { campaign, stages } from '../../config/campaign';
-import { getInitialProgress, percentOf, visualPercent, currentStage } from '../../lib/progress';
+import { frameLabels } from '../../config/house';
+import {
+  getInitialProgress,
+  percentOf,
+  visualPercent,
+  currentStage,
+  daysLeft,
+  nextMilestone,
+  showRaised,
+} from '../../lib/progress';
 import { formatCOP, formatUSD, copToUSD } from '../../lib/format';
 import t from '../../i18n/es';
 
 const progress = getInitialProgress();
 const pct = percentOf(progress);
 const now = currentStage(pct);
+const days = daysLeft();
+const next = nextMilestone(progress);
+const visible = showRaised(progress.raised);
+const m = campaign.matching;
 ---
 
 <div class="progress" data-progress>
-  <p class="now">
-    <span>{t.hero.nowBuilding}</span>
-    <strong data-now-building>{now.icon} {now.name}</strong>
+  {m.active && <p class="matching">{t.progress.matching(m.sponsor, m.until)}</p>}
+
+  <p class="countdown" data-countdown>
+    {
+      days > 0 ? (
+        <>
+          ⏰ <strong data-days>{t.progress.daysLeft(days)}</strong> <span>{t.progress.deadline}</span>
+        </>
+      ) : (
+        t.progress.ended
+      )
+    }
   </p>
 
   <div
@@ -25,25 +47,40 @@ const now = currentStage(pct);
     data-progress-bar
   >
     <div class="bar__fill" style={`width:${visualPercent(pct)}%`} data-progress-fill>
-      <span class="bar__pct" data-progress-pct>{Math.round(pct)}%</span>
+      <span class="bar__pct" data-progress-pct hidden={!visible}>{Math.round(pct)}%</span>
     </div>
     {stages.slice(1).map((s) => <span class="bar__tick" style={`left:${s.threshold}%`} aria-hidden="true" />)}
   </div>
 
   <div class="amounts" aria-live="polite">
-    <p>
+    <p data-raised-wrap hidden={!visible}>
       <strong class="raised" data-progress-raised>{formatCOP(progress.raised)}</strong>
       <span> {t.progress.raised}</span>
     </p>
+    <p class="launch" data-launch hidden={visible}>🚀 {t.progress.launch}</p>
     <p class="goal">
       {t.progress.goal} <strong>{formatCOP(campaign.goal)}</strong>
       <span class="usd">≈ {formatUSD(copToUSD(campaign.goal))}</span>
     </p>
   </div>
+
+  {
+    next && (
+      <p class="next" data-next>
+        <span class="next__label">{t.progress.next}</span>
+        <strong data-next-label>{frameLabels[next.pct]}</strong>
+        <span class="next__missing" data-next-missing>
+          {t.progress.missing(formatCOP(next.missing))}
+        </span>
+      </p>
+    )
+  }
+
   <p class="heroes" data-heroes>
     {progress.heroes > 0 ? t.progress.heroes(progress.heroes) : t.progress.firstHero}
   </p>
 
+  <p class="visually-hidden">{t.hero.nowBuilding} <span data-now-building>{now.icon} {now.name}</span></p>
   <ol class="chips" aria-label="Etapas de la obra">
     {
       stages.map((s, i) => {
@@ -64,11 +101,12 @@ const now = currentStage(pct);
     display: grid;
     gap: 0.6rem;
   }
-  .now {
+  .countdown,
+  .matching {
     display: inline-flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
     justify-self: start;
     margin: 0;
     padding: 0.3rem 0.9rem;
@@ -76,6 +114,39 @@ const now = currentStage(pct);
     border-radius: 999px;
     background: var(--yellow);
     font-weight: 700;
+  }
+  .matching {
+    border-radius: 16px;
+    background: var(--red-strong);
+    color: var(--white);
+  }
+  .countdown span {
+    font-weight: 500;
+  }
+  .launch {
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+  .next {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.2rem 0.45rem;
+    margin: 0;
+    padding: 0.6rem 0.8rem;
+    border: 2px dashed var(--ink);
+    border-radius: 14px;
+    background: var(--sky-light);
+  }
+  .next__label {
+    flex-basis: 100%;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+  .next__missing {
+    font-weight: 800;
+    color: var(--red-text);
   }
   .bar {
     position: relative;

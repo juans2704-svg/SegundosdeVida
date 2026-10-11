@@ -30,6 +30,7 @@ const progress = getInitialProgress();
                 <tr>
                   <th scope="row">
                     <span aria-hidden="true">{s.icon}</span> {s.name}
+                    <small class="stage-desc">{s.description}</small>
                   </th>
                   <td>
                     <span class="mini-bar" style={`--w:${s.budgetPct * 2.5}%`} aria-hidden="true" />
@@ -133,6 +134,13 @@ const progress = getInitialProgress();
   tfoot td {
     font-weight: 800;
     border-bottom: 0;
+  }
+  .stage-desc {
+    display: block;
+    max-width: 34ch;
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
   }
   .mini-bar {
     display: inline-block;

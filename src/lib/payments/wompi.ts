@@ -46,12 +46,15 @@ async function getIntegritySignature(order: DonationOrder): Promise<string> {
   const res = await fetch(payments.wompi.signatureEndpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ reference: order.reference, amountInCents: order.amountCOP * 100, currency: 'COP' }),
+    body: JSON.stringify({ reference: order.reference, amountInCents: cents(order), currency: 'COP' }),
   });
   if (!res.ok) throw new Error('wompi-signature');
   const data = (await res.json()) as { integrity: string };
   return data.integrity;
 }
+
+/** Wompi siempre cobra en COP: pieza + comisión cubierta, en centavos. */
+const cents = (order: DonationOrder) => Math.round((order.amount + order.fee) * 100);
 
 const STATUS: Record<string, PaymentResult['status']> = {
   APPROVED: 'approved',
@@ -70,7 +73,7 @@ export const wompiProvider: PaymentProvider = {
       const [, integrity] = await Promise.all([loadWidget(), getIntegritySignature(order)]);
       const checkout = new window.WidgetCheckout!({
         currency: 'COP',
-        amountInCents: order.amountCOP * 100,
+        amountInCents: cents(order),
         reference: order.reference,
         publicKey: payments.wompi.publicKey,
         signature: { integrity },

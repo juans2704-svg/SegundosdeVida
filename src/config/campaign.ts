@@ -31,6 +31,10 @@ export interface Piece {
   phrase: string;
   impact: string[];
   recommended?: boolean;
+  /** Pieza recomendada cuando se elige el Plan Padrino mensual. */
+  recommendedMonthly?: boolean;
+  /** `false` = no se ofrece como aporte mensual. */
+  monthly?: boolean;
 }
 
 export const campaign = {
@@ -42,6 +46,18 @@ export const campaign = {
   updatedAt: '2026-10-09',
   /** La barra nunca se ve vacía (brief §7.2). */
   minVisualPct: 3,
+  /** Fecha límite de la campaña (hora de Bogotá). */
+  deadline: '2026-11-30T23:59:59-05:00',
+  /**
+   * Por debajo de este monto no se muestra "$X recaudado" (evita lanzar mostrando $0):
+   * se muestra la próxima meta y los héroes. 2 % de la meta = $5.000.000.
+   */
+  showRaisedFrom: 5_000_000,
+  /**
+   * Donación igualada ("cada pieza vale doble"). Se activa poniendo `active: true`
+   * con el nombre de la empresa que iguala y hasta cuándo.
+   */
+  matching: { active: false, sponsor: '', until: '', cap: 0 },
   address: 'Cr. 28 Bis #51-33, sector Galerías, Bogotá',
   capacity: 15,
 };
@@ -97,29 +113,8 @@ export const stages: Stage[] = [
   },
 ];
 
+/** El orden es el de la pantalla: la recomendada primero y la más pequeña al final. */
 export const pieces: Piece[] = [
-  {
-    id: 'material',
-    icon: '🍲',
-    amount: 20_000,
-    label: 'Material de instalación',
-    phrase: 'material de instalación',
-    impact: [
-      'Tubos y cables que llevan agua y luz a la cocina',
-      'Un paso más para que una mamá le cocine a su valiente',
-    ],
-  },
-  {
-    id: 'pintura',
-    icon: '🎨',
-    amount: 50_000,
-    label: 'Pintura de una pared',
-    phrase: 'la pintura de una pared',
-    impact: [
-      'Una pared gris se vuelve alegre y llena de color',
-      'Un cuarto que se siente hogar y no obra',
-    ],
-  },
   {
     id: 'ventana',
     icon: '🪟',
@@ -150,10 +145,34 @@ export const pieces: Piece[] = [
     amount: 1_000_000,
     label: 'Una habitación equipada',
     phrase: 'una habitación equipada',
+    monthly: false,
     impact: [
       'Cama para el niño y para su mamá o cuidador',
       'Un lugar seguro para descansar juntos',
       'Una familia más con un lugar seguro donde dormir',
+    ],
+  },
+  {
+    id: 'pintura',
+    icon: '🎨',
+    amount: 50_000,
+    label: 'Pintura de una pared',
+    phrase: 'la pintura de una pared',
+    recommendedMonthly: true,
+    impact: [
+      'Una pared gris se vuelve alegre y llena de color',
+      'Un cuarto que se siente hogar y no obra',
+    ],
+  },
+  {
+    id: 'material',
+    icon: '🍲',
+    amount: 20_000,
+    label: 'Material de instalación',
+    phrase: 'material de instalación',
+    impact: [
+      'Tubos y cables que llevan agua y luz a la cocina',
+      'Un paso más para que una mamá le cocine a su valiente',
     ],
   },
   {
@@ -179,6 +198,10 @@ export const foundation = {
   email: 'PENDIENTE@segundosdevida.com',
   treasuryEmail: 'PENDIENTE@segundosdevida.com',
   phone: 'PENDIENTE',
+  /** PENDIENTE: WhatsApp de la campaña, solo números con indicativo (ej. '573001234567'). */
+  whatsapp: '',
+  /** La fundación emite certificado de donación a personas naturales y jurídicas. */
+  issuesCertificates: true,
   social: {
     instagram: 'https://instagram.com/', // PENDIENTE
     facebook: 'https://facebook.com/', // PENDIENTE

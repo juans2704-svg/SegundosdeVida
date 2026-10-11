@@ -44,7 +44,7 @@ import t from '../../i18n/es';
     .demo-panel {
       left: 16px;
       right: 16px;
-      bottom: 10px;
+      bottom: calc(86px + env(safe-area-inset-bottom, 0px));
       width: auto;
       padding: 0.45rem 0.8rem;
       box-shadow: 0 3px 0 var(--ink);

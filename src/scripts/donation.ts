@@ -4,16 +4,39 @@
  */
 import { pieces, type Piece } from '../config/campaign';
 import { payments, regions, type Region } from '../config/payments';
-import { formatCOP, formatMoney, formatUSD, copToUSD, usdToCOP } from '../lib/format';
+import { formatCOP, formatMoney, formatUSD, formatUSDCents, copToUSD, usdToCOP, feeCover } from '../lib/format';
 import { buildReference, providerFor, type DonationOrder, type Frequency } from '../lib/payments';
 import { addDonation } from './progress';
 import { drawCarnet, carnetBlob, type CarnetData } from './carnet';
+import { track } from './analytics';
 import t from '../i18n/es';
 
 const d = t.donate;
 const form = document.querySelector<HTMLFormElement>('[data-donate]');
 
 if (form) init(form);
+initShareSite();
+
+/** "¿Hoy no puedes poner una pieza?": compartir la campaña sin donar. */
+function initShareSite() {
+  const wa = document.querySelector<HTMLAnchorElement>('[data-share-site="whatsapp"]');
+  const copy = document.querySelector<HTMLButtonElement>('[data-share-site="copy"]');
+  const status = document.querySelector<HTMLElement>('[data-share-site-status]');
+  if (wa) {
+    wa.href = `https://wa.me/?text=${encodeURIComponent(d.shareMessage(shareLink('whatsapp-sin-donar')))}`;
+    wa.addEventListener('click', () => track('share', { method: 'whatsapp', donated: false }));
+  }
+  copy?.addEventListener('click', async () => {
+    const link = shareLink('copiar-enlace');
+    try {
+      await navigator.clipboard.writeText(link);
+      if (status) status.textContent = d.shareCopied;
+    } catch {
+      if (status) status.textContent = link;
+    }
+    track('share', { method: 'copy', donated: false });
+  });
+}
 
 function init(form: HTMLFormElement) {
   const q = <T extends HTMLElement = HTMLElement>(sel: string) => form.querySelector<T>(sel)!;
@@ -24,7 +47,7 @@ function init(form: HTMLFormElement) {
 
   const region = () => (form.querySelector<HTMLInputElement>('input[name=region]:checked')?.value ?? 'co') as Region;
   const currency = () => regions[region()].currency;
-  const piece = (): Piece => pieces.find((p) => p.id === form.querySelector<HTMLInputElement>('input[name=piece]:checked')?.value) ?? pieces[2];
+  const piece = (): Piece => pieces.find((p) => p.id === form.querySelector<HTMLInputElement>('input[name=piece]:checked')?.value) ?? pieces.find((p) => p.recommended)!;
   const frequency = () => (form.querySelector<HTMLInputElement>('input[name=frequency]:checked')?.value ?? 'once') as Frequency;
 
   // ---------- Montos ----------
@@ -51,6 +74,31 @@ function init(form: HTMLFormElement) {
     });
     q('[data-custom-currency]').textContent = cur === 'COP' ? 'COP $' : 'USD $';
     field('custom').placeholder = cur === 'COP' ? '80.000' : '25';
+  }
+
+  const money = (value: number, cur: 'COP' | 'USD') => (cur === 'COP' ? formatCOP(value) : formatUSDCents(value));
+
+  function fee(amount: number) {
+    return field('coverFee').checked ? feeCover(amount, currency()) : 0;
+  }
+
+  /** Única / mensual: cambia las piezas visibles y selecciona la recomendada para ese modo. */
+  function applyFrequency() {
+    const monthly = frequency() === 'monthly';
+    form.classList.toggle('is-monthly', monthly);
+    const recommended = pieces.find((p) => (monthly ? p.recommendedMonthly : p.recommended));
+    qa<HTMLLabelElement>('[data-piece]').forEach((label) => {
+      label.style.order = label.dataset.piece === recommended?.id ? '-1' : '';
+    });
+    const current = piece();
+    if (monthly && current.monthly === false) select(recommended?.id);
+    else if (current.amount !== null) select(recommended?.id);
+  }
+
+  function select(id?: string) {
+    const input = form.querySelector<HTMLInputElement>(`input[name=piece][value="${id}"]`);
+    if (input) input.checked = true;
+    toggleCustom();
   }
 
   function toggleCustom() {
@@ -106,6 +154,10 @@ function init(form: HTMLFormElement) {
       setError('consent', d.fields.consentError);
       ok = false;
     } else setError('consent', '');
+    if (field('certificate').checked && !field('docNumber').value.trim()) {
+      setError('docNumber', d.fields.docError);
+      ok = false;
+    } else setError('docNumber', '');
     if (!ok) form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
     return ok;
   }
@@ -130,6 +182,16 @@ function init(form: HTMLFormElement) {
     const provider = providerFor(region());
     q('[data-summary-provider]').textContent = provider.label;
     q('[data-summary-methods]').textContent = provider.methods;
+    updateTotal();
+  }
+
+  function updateTotal() {
+    const a = amounts();
+    if ('error' in a) return;
+    const cur = currency();
+    q('[data-fee-text]').textContent = d.confirm.fee(money(feeCover(a.amount, cur), cur));
+    q('[data-summary-total]').textContent =
+      money(a.amount + fee(a.amount), cur) + (frequency() === 'monthly' ? ` ${d.frequency.monthlyPrice}` : '');
   }
 
   // ---------- Pago ----------
@@ -141,10 +203,19 @@ function init(form: HTMLFormElement) {
     const btn = q<HTMLButtonElement>('[data-confirm]');
     btn.disabled = true;
 
+    const certificate = field('certificate').checked
+      ? {
+          name: field('certName').value.trim() || field('name').value.trim(),
+          docType: (form.elements.namedItem('docType') as HTMLSelectElement).value,
+          docNumber: field('docNumber').value.trim(),
+        }
+      : undefined;
     const order: DonationOrder = {
       reference: buildReference(a.amountCOP),
       amountCOP: a.amountCOP,
       amount: a.amount,
+      fee: fee(a.amount),
+      certificate,
       currency: currency(),
       frequency: frequency(),
       pieceId: piece().id,
@@ -175,7 +246,15 @@ function init(form: HTMLFormElement) {
     const retry = q('[data-retry]');
     retry.hidden = status === 'approved' || status === 'pending';
 
+    const value = order.amount + order.fee;
     if (status === 'approved') {
+      track('purchase', {
+        transaction_id: order.reference,
+        value,
+        currency: order.currency,
+        piece: order.pieceId,
+        frequency: order.frequency,
+      });
       msg.textContent = d.approved;
       showStep('result');
       // Fase 2: el recaudo real lo suma el webhook; aquí se refleja en la sesión.
@@ -184,6 +263,7 @@ function init(form: HTMLFormElement) {
       showThanks(order);
       return;
     }
+    if (status !== 'pending') track('payment_failed', { status, value, currency: order.currency });
     msg.textContent = status === 'pending' ? d.pending : status === 'declined' ? d.declined : d.networkError;
     showStep('result');
   }
@@ -196,6 +276,12 @@ function init(form: HTMLFormElement) {
       field('custom').value = '';
     }
     if (target.name === 'piece') toggleCustom();
+    if (target.name === 'frequency') applyFrequency();
+    if (target.name === 'piece' || target.name === 'frequency') {
+      track('select_piece', { piece: piece().id, frequency: frequency(), currency: currency() });
+    }
+    if (target.name === 'certificate') q('[data-certificate]').hidden = !target.checked;
+    if (target.name === 'coverFee') updateTotal();
   });
 
   field('custom').addEventListener('input', (e) => {
@@ -208,16 +294,21 @@ function init(form: HTMLFormElement) {
   form.addEventListener('click', (e) => {
     const el = (e.target as HTMLElement).closest<HTMLElement>('[data-next],[data-prev],[data-retry],[data-restart]');
     if (!el) return;
-    if (el.dataset.next === '2' && validateStep1()) showStep('2');
-    else if (el.dataset.next === '3' && validateStep2()) {
+    if (el.dataset.next === '2' && validateStep1()) {
+      track('add_info', { piece: piece().id, frequency: frequency() });
+      showStep('2');
+    } else if (el.dataset.next === '3' && validateStep2()) {
       fillSummary();
       showStep('3');
+      const a = amounts();
+      if (!('error' in a)) track('begin_checkout', { value: a.amount, currency: currency(), piece: piece().id });
     } else if (el.dataset.prev) showStep(el.dataset.prev);
     else if (el.hasAttribute('data-retry')) showStep('3');
     else if (el.hasAttribute('data-restart')) {
       form.reset();
       updatePrices();
-      toggleCustom();
+      applyFrequency();
+      q('[data-certificate]').hidden = true;
       showStep('1');
     }
   });
@@ -228,7 +319,7 @@ function init(form: HTMLFormElement) {
   });
 
   updatePrices();
-  toggleCustom();
+  applyFrequency();
 }
 
 // ---------- Muro de héroes ----------
@@ -290,6 +381,7 @@ function setupShare(section: HTMLElement, phrase: string, canvas: HTMLCanvasElem
   };
   section.querySelectorAll<HTMLAnchorElement>('[data-share-net]').forEach((a) => {
     a.href = nets[a.dataset.shareNet!];
+    a.onclick = () => track('share', { method: a.dataset.shareNet, donated: true });
   });
 
   const status = section.querySelector<HTMLElement>('[data-share-status]')!;

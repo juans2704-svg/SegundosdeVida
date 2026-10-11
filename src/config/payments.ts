@@ -21,6 +21,15 @@ export const payments = {
 
   minAmount: { COP: 10_000, USD: 3 },
 
+  /**
+   * Comisión de la pasarela, para la opción "cubrir la comisión".
+   * PENDIENTE: confirmar tarifas del contrato (brief §13: 2,99 % + $900 en Wompi).
+   */
+  fees: {
+    COP: { pct: 0.0299, fixed: 900 },
+    USD: { pct: 0.054, fixed: 0.3 },
+  },
+
   wompi: {
     publicKey: import.meta.env.PUBLIC_WOMPI_PUBLIC_KEY ?? 'pub_test_REEMPLAZAR',
     widgetUrl: 'https://checkout.wompi.co/widget.js',

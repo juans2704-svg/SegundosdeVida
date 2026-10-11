@@ -1,7 +1,7 @@
 ---
 import Character from '../characters/Character.astro';
 import SpeechBubble from '../ui/SpeechBubble.astro';
-import { pieces } from '../../config/campaign';
+import { pieces, foundation } from '../../config/campaign';
 import { payments } from '../../config/payments';
 import { formatCOP, formatUSD, copToUSD } from '../../lib/format';
 import t from '../../i18n/es';
@@ -47,11 +47,30 @@ const d = t.donate;
 
       <!-- Paso A: elige tu pieza -->
       <div class="step" data-step="1" tabindex="-1">
+        <fieldset class="frequency">
+          <legend>{d.frequency.legend}</legend>
+          <label class="pill pill--big">
+            <input type="radio" name="frequency" value="once" checked />
+            <span>{d.frequency.once}</span>
+          </label>
+          <label class="pill pill--big">
+            <input type="radio" name="frequency" value="monthly" />
+            <span>
+              {d.frequency.monthly}
+              <small>{d.frequency.monthlyHelp}</small>
+            </span>
+          </label>
+        </fieldset>
+
         <fieldset class="pieces">
           <legend class="visually-hidden">{d.steps[0]}</legend>
           {
             pieces.map((p) => (
-              <label class:list={['piece', { 'piece--rec': p.recommended }]}>
+              <label
+                class:list={['piece', { 'piece--rec': p.recommended, 'piece--rec-monthly': p.recommendedMonthly }]}
+                data-piece={p.id}
+                data-monthly={p.monthly === false ? 'false' : 'true'}
+              >
                 <input type="radio" name="piece" value={p.id} checked={p.recommended} />
                 <span class="piece__icon" aria-hidden="true">
                   {p.icon}
@@ -60,6 +79,7 @@ const d = t.donate;
                 {p.amount !== null ? (
                   <span class="piece__price" data-price={p.amount}>
                     <strong data-price-main>{formatCOP(p.amount)}</strong>
+                    <span class="piece__per">{d.frequency.monthlyPrice}</span>
                     <small data-price-alt>
                       {d.approx} {formatUSD(copToUSD(p.amount))}
                     </small>
@@ -69,7 +89,8 @@ const d = t.donate;
                     <strong>✏️</strong>
                   </span>
                 )}
-                {p.recommended && <span class="piece__badge">⭐ {d.recommended}</span>}
+                {p.recommended && <span class="piece__badge piece__badge--once">⭐ {d.recommended}</span>}
+                {p.recommendedMonthly && <span class="piece__badge piece__badge--monthly">💛 {d.monthlyRecommended}</span>}
               </label>
             ))
           }
@@ -92,6 +113,8 @@ const d = t.donate;
           <p class="error" id="custom-error" data-error="custom" aria-live="polite"></p>
         </div>
 
+        <p class="monthly-note">{d.frequency.monthlyNote}</p>
+
         <div class="actions">
           <button type="button" class="btn btn--primary" data-next="2">{d.next}</button>
         </div>
@@ -99,21 +122,6 @@ const d = t.donate;
 
       <!-- Paso B: frecuencia y datos -->
       <div class="step" data-step="2" tabindex="-1" hidden>
-        <fieldset class="frequency">
-          <legend>{d.frequency.legend}</legend>
-          <label class="pill pill--big">
-            <input type="radio" name="frequency" value="once" checked />
-            <span>{d.frequency.once}</span>
-          </label>
-          <label class="pill pill--big">
-            <input type="radio" name="frequency" value="monthly" />
-            <span>
-              {d.frequency.monthly}
-              <small>{d.frequency.monthlyHelp}</small>
-            </span>
-          </label>
-        </fieldset>
-
         <div class="fields">
           <div class="field">
             <label for="donor-name">{d.fields.name}</label>
@@ -156,6 +164,29 @@ const d = t.donate;
           <input type="checkbox" name="wall" />
           <span>{d.fields.wall}</span>
         </label>
+        <label class="check">
+          <input type="checkbox" name="certificate" aria-controls="certificate-fields" />
+          <span>{d.fields.certificate}</span>
+        </label>
+        <div class="fields certificate" id="certificate-fields" data-certificate hidden>
+          <div class="field">
+            <label for="cert-name">{d.fields.certificateName}</label>
+            <input id="cert-name" name="certName" type="text" autocomplete="organization" maxlength="80" />
+          </div>
+          <div class="field field--row">
+            <div>
+              <label for="doc-type">{d.fields.docType}</label>
+              <select id="doc-type" name="docType">
+                {Object.entries(d.fields.docTypes).map(([v, l]) => <option value={v}>{l}</option>)}
+              </select>
+            </div>
+            <div>
+              <label for="doc-number">{d.fields.docNumber}</label>
+              <input id="doc-number" name="docNumber" type="text" inputmode="numeric" maxlength="20" aria-describedby="doc-error" />
+            </div>
+          </div>
+          <p class="error" id="doc-error" data-error="docNumber" aria-live="polite"></p>
+        </div>
 
         <div class="actions">
           <button type="button" class="btn btn--ghost" data-prev="1">{d.back}</button>
@@ -177,6 +208,11 @@ const d = t.donate;
           <p class="summary__piece" data-summary-piece></p>
           <p class="summary__amount" data-summary-amount></p>
           <ul class="impact" data-impact></ul>
+          <label class="check check--fee">
+            <input type="checkbox" name="coverFee" checked />
+            <span data-fee-text></span>
+          </label>
+          <p class="summary__total">{d.confirm.total}: <strong data-summary-total></strong></p>
           <p class="summary__pay">
             {d.confirm.payWith} <strong data-summary-provider></strong>
             <small data-summary-methods></small>
@@ -205,11 +241,32 @@ const d = t.donate;
       </div>
     </form>
 
+    <ul class="trust" aria-label="Por qué confiar">
+      {
+        d.trust.map((item) => (
+          <li>
+            <span aria-hidden="true">{item.icon}</span> {item.text}
+          </li>
+        ))
+      }
+      <li><span aria-hidden="true">🏷️</span> NIT {foundation.nit}</li>
+    </ul>
+
+    <aside class="share-cta card" aria-labelledby="share-cta-title">
+      <h3 id="share-cta-title">{d.shareTitle}</h3>
+      <p>{d.shareBody}</p>
+      <div class="share-cta__btns">
+        <a class="btn btn--primary" data-share-site="whatsapp" target="_blank" rel="noopener">{d.shareCta}</a>
+        <button type="button" class="btn btn--white" data-share-site="copy">{d.shareCopy}</button>
+      </div>
+      <p class="share-cta__status" data-share-site-status aria-live="polite"></p>
+    </aside>
+
     {
       payments.mode === 'demo' && (
         <p class="demo-note">
-          🧪 <strong>{t.demo.title}:</strong> los pagos están simulados. Agrega <code>?demo=1</code> a la URL para ver
-          todas las etapas de la casa.
+          🧪 <strong>{t.demo.title}:</strong> los pagos están simulados. Usa el control "Vista previa del avance" para ver
+          todas las fases de la casa.
         </p>
       )
     }
@@ -379,8 +436,34 @@ const d = t.donate;
     outline: 4px solid var(--blue);
     outline-offset: 3px;
   }
-  .piece--rec {
+  .flow:not(.is-monthly) .piece--rec,
+  .flow.is-monthly .piece--rec-monthly {
     padding-top: 1.5rem;
+  }
+  .piece__per,
+  .piece__badge--monthly,
+  .monthly-note {
+    display: none;
+  }
+  .is-monthly .piece__per {
+    display: inline;
+    font-weight: 700;
+    color: var(--red-text);
+  }
+  .is-monthly .piece__badge--once {
+    display: none;
+  }
+  .is-monthly .piece__badge--monthly {
+    display: inline;
+  }
+  .is-monthly .monthly-note {
+    display: block;
+    margin: 0.8rem 0 0;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+  }
+  .is-monthly .piece[data-monthly='false'] {
+    display: none;
   }
   .piece__icon {
     grid-area: icon;
@@ -443,6 +526,7 @@ const d = t.donate;
     border: 0;
     border-radius: 0 14px 14px 0;
   }
+  select,
   input[type='text'],
   input[type='email'],
   input[type='tel'] {
@@ -580,6 +664,59 @@ const d = t.donate;
   }
   .result__msg {
     font-size: 1.3rem;
+    font-weight: 700;
+  }
+  .field--row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+  }
+  .certificate {
+    margin-top: 0.8rem;
+    padding: 1rem;
+    border-radius: 14px;
+    background: var(--sky-light);
+  }
+  .check--fee {
+    padding: 0.7rem 0.8rem;
+    border-radius: 12px;
+    background: var(--white);
+  }
+  .summary__total {
+    margin-top: 0.8rem !important;
+    font-size: 1.15rem;
+  }
+  .trust {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem 1.2rem;
+    max-width: 860px;
+    margin: 1.4rem auto 0;
+    padding: 0;
+    list-style: none;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+  .share-cta {
+    max-width: 860px;
+    margin: 2rem auto 0;
+    padding: clamp(18px, 3vw, 28px);
+    background: var(--sky-light);
+    text-align: center;
+  }
+  .share-cta h3 {
+    margin-bottom: 0.3rem;
+  }
+  .share-cta__btns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.7rem;
+  }
+  .share-cta__status {
+    min-height: 1.2em;
+    margin: 0.6rem 0 0;
     font-weight: 700;
   }
   .demo-note {
