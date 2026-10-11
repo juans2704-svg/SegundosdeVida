@@ -64,11 +64,14 @@ const es = {
     ],
     dreamsTitle: 'Sueñan en grande',
     dreamsBody:
-      'Bomberos, policías, doctores… Los Super Calvitos ya saben qué quieren ser cuando sean grandes. Para llegar allá, hoy necesitan un hogar donde descansar y seguir soñando.',
+      'Bomberos, pilotos, doctoras, chefs… Los Super Calvitos ya saben qué quieren ser cuando sean grandes. Para llegar allá, hoy necesitan un hogar donde descansar y seguir soñando.',
     dreams: [
       { who: 'bombero', caption: '🚒 Quiero ser bombero' },
-      { who: 'policia', caption: '🚓 Quiero ser policía' },
-      { who: 'doctor', caption: '🩺 Quiero ser doctor' },
+      { who: 'doctora', caption: '🩺 Quiero ser doctora' },
+      { who: 'piloto', caption: '✈️ Quiero ser piloto' },
+      { who: 'policiaCalvita', caption: '🚓 Quiero ser policía' },
+      { who: 'chef', caption: '🍲 Quiero ser chef' },
+      { who: 'constructor', caption: '🔨 Quiero ser constructor' },
     ],
     banner:
       'Los Super Calvitos son los valientes que luchan cada día. Tú puedes ser su héroe: no con capa, con amor.',

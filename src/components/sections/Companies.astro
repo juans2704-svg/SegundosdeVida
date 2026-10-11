@@ -28,7 +28,10 @@ const mail = `mailto:${foundation.email}?subject=${encodeURIComponent('Empresa â
     </div>
     <div class="companies__side">
       <div class="companies__hero">
-        <Character who="empresaria" />
+        <div class="companies__duo">
+          <Character who="empresaria" />
+          <Character who="ejecutivo" />
+        </div>
         <p class="companies__bubble">{c.speech}</p>
       </div>
     <ul class="options">
@@ -92,9 +95,22 @@ const mail = `mailto:${foundation.email}?subject=${encodeURIComponent('Empresa â
   }
   .companies__hero {
     display: grid;
-    grid-template-columns: minmax(90px, 140px) 1fr;
+    grid-template-columns: minmax(150px, 230px) 1fr;
     align-items: center;
     gap: 1rem;
+  }
+  .companies__duo {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.4rem;
+    height: clamp(150px, 26vw, 210px);
+  }
+  .companies__duo :global(.character) {
+    height: 100%;
+  }
+  .companies__duo :global(.character img) {
+    width: auto;
+    height: 100%;
   }
   .companies__bubble {
     margin: 0;
