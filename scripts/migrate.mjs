@@ -10,7 +10,8 @@ if (!url) {
   process.exit(1);
 }
 
-const sql = postgres(url, { max: 1, prepare: !url.includes(':6543'), onnotice: () => {} });
+const ssl = /@(localhost|127\.0\.0\.1)[:/]/.test(url) ? false : 'require';
+const sql = postgres(url, { max: 1, prepare: !url.includes(':6543'), ssl, onnotice: () => {} });
 const dir = join(process.cwd(), 'supabase', 'migrations');
 
 try {

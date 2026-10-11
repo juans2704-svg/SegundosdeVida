@@ -141,8 +141,12 @@ function columns(obj: Record<string, unknown>, map: Record<string, string>): Row
   return out;
 }
 
+/** Conexión cifrada para cualquier base que no sea local (Supabase). */
+export const sslFor = (url: string) => (/@(localhost|127\.0\.0\.1)[:/]/.test(url) ? false : ('require' as const));
+
 export function createPostgresStore(url: string): Store {
   const sql = postgres(url, {
+    ssl: sslFor(url),
     max: Number(process.env.DATABASE_POOL_MAX ?? 5),
     prepare: !url.includes(':6543'),
     idle_timeout: 20,

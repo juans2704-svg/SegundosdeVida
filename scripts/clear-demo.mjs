@@ -7,7 +7,8 @@ if (!url) {
   console.error('✖ Falta DATABASE_URL.');
   process.exit(1);
 }
-const sql = postgres(url, { max: 1, prepare: !url.includes(':6543') });
+const ssl = /@(localhost|127\.0\.0\.1)[:/]/.test(url) ? false : 'require';
+const sql = postgres(url, { max: 1, prepare: !url.includes(':6543'), ssl });
 try {
   const subs = await sql`select distinct subscription_id from donations where source = 'demo' and subscription_id is not null`;
   const d = await sql`delete from donations where source = 'demo'`;
