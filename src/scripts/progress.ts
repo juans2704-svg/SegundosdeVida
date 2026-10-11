@@ -17,6 +17,8 @@ import {
 import { formatCOP } from '../lib/format';
 import { payments } from '../config/payments';
 import { houseFrames, frameFor, frameSrc, frameSrcset, frameLabels } from '../config/house';
+import * as api from './api';
+import type { ServerProgress } from './api';
 import t from '../i18n/es';
 
 let state: Progress = getInitialProgress();
@@ -173,6 +175,43 @@ export function addDonation(amountCOP: number) {
   render({ ...state, raised: state.raised + amountCOP, heroes: state.heroes + 1 });
 }
 
+/** Muro de héroes con los datos del servidor. */
+function renderWall(list: ServerProgress['wall']) {
+  const wall = $('[data-wall]');
+  if (!wall) return;
+  if (list.length) $('[data-wall-empty]')?.remove();
+  wall.replaceChildren(
+    ...list.map((w) => {
+      const li = document.createElement('li');
+      const strong = document.createElement('strong');
+      strong.textContent = w.name || t.thanks.anonymous;
+      li.append(strong, ` · ${w.icon}`);
+      return li;
+    }),
+  );
+}
+
+let demoPreview = false;
+
+/** Aplica el recaudo real del servidor (no se aplica mientras se usa la vista previa del avance). */
+export function applyServerProgress(p: ServerProgress, { announce = true } = {}) {
+  if (demoPreview) return;
+  render({ raised: p.raised, goal: p.goal, heroes: p.heroes }, { announce });
+  renderWall(p.wall);
+}
+
+/** Recaudo real al abrir y cada minuto mientras la página está visible. */
+async function initServerProgress() {
+  const first = await api.firstProgress();
+  if (!first) return;
+  applyServerProgress(first, { announce: false });
+  setInterval(async () => {
+    if (document.visibilityState !== 'visible') return;
+    const p = await api.refreshProgress();
+    if (p) applyServerProgress(p);
+  }, 60_000);
+}
+
 /** Vista previa: mueve la casa entre 0 y 100%. */
 function initDemoPanel() {
   const panel = $('[data-demo-panel]');
@@ -183,6 +222,7 @@ function initDemoPanel() {
   const out = panel.querySelector<HTMLOutputElement>('output')!;
   const base = state;
   range.addEventListener('input', () => {
+    demoPreview = true;
     const pct = Number(range.value);
     out.value = `${pct}%`;
     render({ ...base, raised: Math.round((campaign.goal * pct) / 100) });
@@ -223,3 +263,4 @@ function initCountdown() {
 initReveal();
 initCountdown();
 initDemoPanel();
+initServerProgress();

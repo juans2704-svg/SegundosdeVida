@@ -36,6 +36,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap"
     />
+    <slot name="head" />
   </head>
   <body>
     <slot />

@@ -1,0 +1,369 @@
+---
+/**
+ * Panel de administración (mínimo viable, brief §7.4).
+ * Protegido por src/middleware.ts (usuario y contraseña).
+ */
+import '../../styles/global.css';
+import { getStore } from '../../server/db';
+import { getWompiConfig } from '../../server/wompi';
+import { campaign, pieces } from '../../config/campaign';
+import { formatCOP } from '../../lib/format';
+
+export const prerender = false;
+
+const role = Astro.locals.role!;
+const host = Astro.request.headers.get('x-forwarded-host') ?? Astro.request.headers.get('host') ?? Astro.url.host;
+const proto = Astro.request.headers.get('x-forwarded-proto') ?? Astro.url.protocol.replace(':', '');
+const origin = `${proto}://${host}`;
+const store = getStore();
+const [stats, donations, subscriptions] = await Promise.all([store.stats(), store.listDonations(200), store.listSubscriptions(100)]);
+const wompi = getWompiConfig();
+const pct = Math.min(100, (stats.raisedCOP / campaign.goal) * 100);
+const piece = (id: string) => pieces.find((p) => p.id === id);
+const when = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleString('es-CO', { timeZone: 'America/Bogota', dateStyle: 'short', timeStyle: 'short' }) : '—';
+const money = (v: number, cur: string) => (cur === 'COP' ? formatCOP(v) : `US$${v.toFixed(2)}`);
+
+const statusLabel: Record<string, string> = {
+  pending: 'Pendiente',
+  approved: 'Aprobada',
+  declined: 'Rechazada',
+  voided: 'Anulada',
+  error: 'Error',
+  active: 'Activo',
+  past_due: 'Pausado (pagos fallidos)',
+  cancelled: 'Cancelado',
+  failed: 'No se pudo activar',
+};
+const modeLabel = { mock: 'Pruebas sin llaves (simulado)', sandbox: 'Wompi sandbox (pruebas)', production: 'Wompi producción' }[wompi.mode];
+---
+
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Panel · La SUPERCASA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" />
+  </head>
+  <body>
+    <main class="wrap admin">
+      <header class="top">
+        <h1>Panel de la SUPERCASA</h1>
+        <p class="who">
+          Rol: <strong>{role === 'admin' ? 'Administrador' : 'Editor (solo consulta)'}</strong> · Pagos: <strong>{modeLabel}</strong> ·
+          Base de datos: <strong>{store.kind === 'postgres' ? 'PostgreSQL' : 'memoria (se borra al reiniciar)'}</strong>
+        </p>
+      </header>
+
+      <section class="stats" aria-label="Resumen">
+        <div class="card stat">
+          <span>Recaudado</span><strong>{formatCOP(stats.raisedCOP)}</strong><small>{pct.toFixed(1)}% de {formatCOP(campaign.goal)}</small>
+        </div>
+        <div class="card stat"><span>Héroes</span><strong>{stats.heroes}</strong><small>{stats.approvedDonations} aportes aprobados</small></div>
+        <div class="card stat">
+          <span>Padrinos activos</span><strong>{stats.activeSubscriptions}</strong><small>{formatCOP(stats.monthlyCOP)} al mes</small>
+        </div>
+      </section>
+
+      <p class="actions">
+        <a class="btn btn--yellow" href="/api/admin/export.csv">⬇️ Exportar donaciones (CSV)</a>
+      </p>
+
+      {
+        role === 'admin' && (
+          <section class="card block">
+            <h2>Registrar un aporte recibido por fuera de la página</h2>
+            <p class="hint">Transferencias, consignaciones o efectivo. Suma al recaudo de inmediato.</p>
+            <form id="manual" class="manual">
+              <label>
+                Monto (COP) *<input name="amountCOP" type="number" min="1000" step="1" required />
+              </label>
+              <label>
+                Nombre<input name="name" maxlength="60" />
+              </label>
+              <label>
+                Correo<input name="email" type="email" maxlength="254" />
+              </label>
+              <label>
+                Pieza
+                <select name="pieceId">
+                  {pieces.map((p) => (
+                    <option value={p.id} selected={p.id === 'libre'}>
+                      {p.icon} {p.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label class="wide">
+                Nota (banco, número de comprobante…)<input name="notes" maxlength="500" />
+              </label>
+              <label class="check">
+                <input type="checkbox" name="showOnWall" /> Mostrar en el muro de héroes
+              </label>
+              <button class="btn btn--primary" type="submit">Registrar aporte</button>
+              <p class="msg" id="manual-msg" aria-live="polite" />
+            </form>
+          </section>
+        )
+      }
+
+      <section class="card block">
+        <h2>Donaciones (últimas {donations.length})</h2>
+        <div class="table">
+          <table>
+            <thead>
+              <tr>
+                <th>Fecha</th><th>Estado</th><th>Pieza</th><th>Valor</th><th>Tipo</th><th>Donante</th><th>Certificado</th><th>Referencia</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                donations.map((d) => (
+                  <tr>
+                    <td>{when(d.createdAt)}</td>
+                    <td><span class={`pill pill--${d.status}`}>{statusLabel[d.status]}</span></td>
+                    <td>{piece(d.pieceId)?.icon} {piece(d.pieceId)?.label ?? d.pieceId}</td>
+                    <td class="num">
+                      {formatCOP(d.amountCOP)}
+                      {d.fee > 0 && <small>+ {money(d.fee, d.currency)} comisión</small>}
+                    </td>
+                    <td>{d.frequency === 'monthly' ? 'Padrino' : 'Única'} · {d.source}</td>
+                    <td>
+                      {d.donorName ?? 'Anónimo'}
+                      <small>{d.donorEmail}</small>
+                    </td>
+                    <td>{d.certificate ? `${d.certificate.docType} ${d.certificate.docNumber}` : '—'}</td>
+                    <td><code>{d.reference}</code>{d.statusMessage && <small>{d.statusMessage}</small>}</td>
+                  </tr>
+                ))
+              }
+              {donations.length === 0 && <tr><td colspan="8">Todavía no hay donaciones.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card block">
+        <h2>Plan Padrino (últimos {subscriptions.length})</h2>
+        <div class="table">
+          <table>
+            <thead>
+              <tr><th>Desde</th><th>Estado</th><th>Pieza</th><th>Mensual</th><th>Padrino</th><th>Medio</th><th>Próximo cobro</th><th>Fallos</th>{role === 'admin' && <th>Cancelación</th>}</tr>
+            </thead>
+            <tbody>
+              {
+                subscriptions.map((s) => (
+                  <tr>
+                    <td>{when(s.createdAt)}</td>
+                    <td><span class={`pill pill--${s.status}`}>{statusLabel[s.status]}</span></td>
+                    <td>{piece(s.pieceId)?.icon} {piece(s.pieceId)?.label ?? s.pieceId}</td>
+                    <td class="num">{formatCOP(s.amountCOP)}</td>
+                    <td>{s.donorName ?? 'Anónimo'}<small>{s.donorEmail}</small></td>
+                    <td>{s.cardBrand ?? s.paymentMethod ?? '—'} {s.cardLast4 && `•••• ${s.cardLast4}`}</td>
+                    <td>{s.nextChargeOn ?? '—'}</td>
+                    <td>{s.failedAttempts}{s.lastError && <small>{s.lastError}</small>}</td>
+                    {role === 'admin' && (
+                      <td>
+                        {s.status !== 'cancelled' && (
+                          <button type="button" class="link" data-copy={`${origin}/padrino/cancelar?t=${s.cancelToken}`}>
+                            Copiar enlace
+                          </button>
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                ))
+              }
+              {subscriptions.length === 0 && <tr><td colspan="9">Todavía no hay padrinos.</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((btn) =>
+        btn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(btn.dataset.copy!);
+            btn.textContent = '¡Copiado!';
+          } catch {
+            prompt('Enlace de cancelación', btn.dataset.copy);
+          }
+        }),
+      );
+      const form = document.querySelector<HTMLFormElement>('#manual');
+      const msg = document.querySelector<HTMLElement>('#manual-msg');
+      form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = new FormData(form);
+        const body = {
+          amountCOP: Number(data.get('amountCOP')),
+          name: String(data.get('name') ?? ''),
+          email: String(data.get('email') ?? ''),
+          pieceId: String(data.get('pieceId') ?? 'libre'),
+          notes: String(data.get('notes') ?? ''),
+          showOnWall: data.get('showOnWall') === 'on',
+        };
+        const res = await fetch('/api/admin/manual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        const out = await res.json().catch(() => ({}));
+        if (msg) msg.textContent = res.ok ? `Registrado (${out.reference}). Recargando…` : out.error ?? 'No se pudo registrar.';
+        if (res.ok) setTimeout(() => location.reload(), 900);
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  .admin {
+    padding-block: 32px 64px;
+    display: grid;
+    gap: 1.5rem;
+  }
+  .top h1 {
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    margin: 0;
+  }
+  .who {
+    margin: 0.3rem 0 0;
+    color: var(--ink-soft);
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .stat {
+    display: grid;
+    gap: 0.1rem;
+    padding: 1rem 1.2rem;
+  }
+  .stat span {
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+  .stat strong {
+    font-size: 1.8rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .actions {
+    margin: 0;
+  }
+  .block {
+    padding: 1.2rem;
+    min-width: 0;
+  }
+  .block h2 {
+    font-size: 1.3rem;
+  }
+  .hint {
+    color: var(--ink-soft);
+  }
+  .manual {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.8rem;
+    align-items: end;
+  }
+  .manual label {
+    display: grid;
+    gap: 0.2rem;
+    font-weight: 700;
+  }
+  .manual .wide {
+    grid-column: 1 / -1;
+  }
+  .manual .check {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  .manual input,
+  .manual select {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 0.4rem 0.6rem;
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    font: inherit;
+  }
+  .manual .check input {
+    min-height: 0;
+    width: 20px;
+    height: 20px;
+  }
+  .msg {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-weight: 700;
+  }
+  .table {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+  th,
+  td {
+    padding: 0.5rem;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid #e3e7ef;
+  }
+  th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  td small {
+    display: block;
+    color: var(--ink-soft);
+  }
+  .num {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  code {
+    font-size: 0.8rem;
+  }
+  .link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--blue);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .pill {
+    display: inline-block;
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    background: #eef1f6;
+  }
+  .pill--approved,
+  .pill--active {
+    background: #c8efca;
+  }
+  .pill--pending {
+    background: var(--yellow-soft);
+  }
+  .pill--declined,
+  .pill--error,
+  .pill--failed,
+  .pill--past_due {
+    background: #ffd9d6;
+  }
+</style>

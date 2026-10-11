@@ -1,26 +1,24 @@
 /**
- * Wompi Widget Checkout (Colombia · COP).
+ * Wompi en el navegador: abre el checkout certificado de Wompi.
  * Docs: https://docs.wompi.co/docs/colombia/widget-checkout-web/
  *
- * Los datos de tarjeta nunca tocan nuestros servidores: todo ocurre en el
- * checkout certificado de Wompi.
+ * Los datos de tarjeta nunca pasan por nuestros servidores. El servidor solo:
+ * - firma cada pago (firma de integridad) en /api/donations, y
+ * - confirma el resultado con el aviso de Wompi o consultando su API.
  *
- * Requisitos de fase 2:
- * - `signatureEndpoint`: función en el servidor que calcula
- *   SHA256(reference + amountInCents + currency + secreto_de_integridad).
- *   El secreto JAMÁS debe estar en el frontend.
- * - Webhook de eventos (`transaction.updated`) con verificación de firma, que
- *   es la fuente de verdad para sumar al recaudo.
- * - Plan Padrino mensual: tokenizar la fuente de pago y programar cobros
- *   recurrentes desde el backend (Wompi no tiene suscripciones en el widget).
+ * Plan Padrino: el widget en modo `tokenize` devuelve un token de la tarjeta
+ * que el servidor convierte en una fuente de pago para los cobros mensuales.
+ * VERIFICAR EN SANDBOX la forma exacta de la respuesta de `tokenize`.
  */
 import { payments } from '../../config/payments';
-import type { DonationOrder, PaymentProvider, PaymentResult } from './types';
+import type { PaymentProvider, PaymentStatus } from './types';
+
+type WidgetResult = Record<string, unknown> & { transaction?: { id: string; status: string } };
 
 declare global {
   interface Window {
     WidgetCheckout?: new (config: Record<string, unknown>) => {
-      open(cb: (result: { transaction?: { id: string; status: string } }) => void): void;
+      open(cb: (result: WidgetResult) => void): void;
     };
   }
 }
@@ -42,21 +40,7 @@ function loadWidget() {
   return loading;
 }
 
-async function getIntegritySignature(order: DonationOrder): Promise<string> {
-  const res = await fetch(payments.wompi.signatureEndpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ reference: order.reference, amountInCents: cents(order), currency: 'COP' }),
-  });
-  if (!res.ok) throw new Error('wompi-signature');
-  const data = (await res.json()) as { integrity: string };
-  return data.integrity;
-}
-
-/** Wompi siempre cobra en COP: pieza + comisión cubierta, en centavos. */
-const cents = (order: DonationOrder) => Math.round((order.amount + order.fee) * 100);
-
-const STATUS: Record<string, PaymentResult['status']> = {
+const STATUS: Record<string, PaymentStatus> = {
   APPROVED: 'approved',
   PENDING: 'pending',
   DECLINED: 'declined',
@@ -64,34 +48,62 @@ const STATUS: Record<string, PaymentResult['status']> = {
   ERROR: 'error',
 };
 
+export interface ServerCheckout {
+  reference: string;
+  amountInCents: number;
+  currency: 'COP' | 'USD';
+  publicKey: string;
+  integrity: string | null;
+}
+
+/** Abre el checkout para una donación única ya creada y firmada por el servidor. */
+export async function openCheckout(
+  checkout: ServerCheckout,
+  donor: { name: string; email: string; phone: string },
+): Promise<{ status: PaymentStatus; transactionId?: string }> {
+  await loadWidget();
+  const widget = new window.WidgetCheckout!({
+    currency: 'COP',
+    amountInCents: checkout.amountInCents,
+    reference: checkout.reference,
+    publicKey: checkout.publicKey,
+    signature: { integrity: checkout.integrity },
+    redirectUrl: new URL(payments.wompi.redirectUrl, location.origin).toString(),
+    customerData: {
+      email: donor.email,
+      fullName: donor.name || 'Héroe anónimo',
+      ...(donor.phone ? { phoneNumber: donor.phone.replace(/\D/g, '').slice(-10), phoneNumberPrefix: '+57' } : {}),
+    },
+  });
+  return new Promise((resolve) => {
+    widget.open((result) => {
+      const tx = result.transaction;
+      resolve(tx ? { status: STATUS[tx.status] ?? 'pending', transactionId: tx.id } : { status: 'cancelled' });
+    });
+  });
+}
+
+/** Tokeniza una tarjeta para el Plan Padrino. Devuelve null si la persona cierra el widget. */
+export async function tokenizeCard(publicKey: string): Promise<{ token: string; type: 'CARD' | 'NEQUI' } | null> {
+  await loadWidget();
+  const widget = new window.WidgetCheckout!({ publicKey, widgetOperation: 'tokenize' });
+  return new Promise((resolve) => {
+    widget.open((result) => {
+      // Formas de respuesta conocidas del modo tokenize
+      const r = result as Record<string, Record<string, unknown> | undefined>;
+      const token = (r.payment_source?.token ?? r.token?.id ?? r.card?.id ?? r.nequi?.id) as string | undefined;
+      const type = r.nequi ? 'NEQUI' : 'CARD';
+      resolve(token ? { token, type } : null);
+    });
+  });
+}
+
 export const wompiProvider: PaymentProvider = {
   id: 'wompi',
   label: 'Wompi',
   methods: payments.wompi.methods,
-  async pay(order) {
-    try {
-      const [, integrity] = await Promise.all([loadWidget(), getIntegritySignature(order)]);
-      const checkout = new window.WidgetCheckout!({
-        currency: 'COP',
-        amountInCents: cents(order),
-        reference: order.reference,
-        publicKey: payments.wompi.publicKey,
-        signature: { integrity },
-        redirectUrl: new URL(payments.wompi.redirectUrl, location.origin).toString(),
-        customerData: {
-          email: order.donor.email,
-          fullName: order.donor.name || 'Héroe anónimo',
-          ...(order.donor.phone ? { phoneNumber: order.donor.phone, phoneNumberPrefix: '+57' } : {}),
-        },
-      });
-      return await new Promise<PaymentResult>((resolve) => {
-        checkout.open((result) => {
-          const tx = result.transaction;
-          resolve({ status: tx ? (STATUS[tx.status] ?? 'error') : 'cancelled', transactionId: tx?.id });
-        });
-      });
-    } catch {
-      return { status: 'error' };
-    }
+  async pay() {
+    // El flujo con servidor usa openCheckout/tokenizeCard desde scripts/donation.ts.
+    return { status: 'error' };
   },
 };

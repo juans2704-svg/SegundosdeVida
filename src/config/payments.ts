@@ -3,9 +3,9 @@
  *
  * - `demo`: no se cobra nada. Un modal simula el checkout para probar todo el
  *   flujo (aprobado / pendiente / rechazado / error de red).
- * - `live`: usa Wompi (Colombia, COP) y PayPal (exterior, USD).
- *   Requiere la fase 2: el endpoint que firma la transacción de Wompi
- *   (firma de integridad) y el webhook que confirma pagos.
+ * - `live`: usa el checkout real de Wompi (Colombia, COP) y PayPal (exterior, USD).
+ *   Con llaves `pub_test_…` Wompi funciona en su entorno de pruebas (sandbox):
+ *   ese es el "modo de pruebas" con pagos de mentira pero el flujo real.
  */
 
 export type PaymentsMode = 'demo' | 'live';
@@ -20,6 +20,8 @@ export const payments = {
   usdRate: 4_000,
 
   minAmount: { COP: 10_000, USD: 3 },
+  /** Tope por transacción en la web (montos mayores: escribir a tesorería). */
+  maxAmount: { COP: 50_000_000, USD: 12_500 },
 
   /**
    * Comisión de la pasarela, para la opción "cubrir la comisión".
@@ -34,8 +36,7 @@ export const payments = {
   wompi: {
     publicKey: import.meta.env.PUBLIC_WOMPI_PUBLIC_KEY ?? 'pub_test_REEMPLAZAR',
     widgetUrl: 'https://checkout.wompi.co/widget.js',
-    /** Fase 2: Edge Function de Supabase que devuelve la firma de integridad. */
-    signatureEndpoint: '/api/wompi/signature',
+    /** Wompi vuelve aquí después de PSE / Bancolombia, agregando `?id=<transacción>`. */
     redirectUrl: '/?pago=resultado',
     methods: 'Tarjetas, PSE, Nequi, Daviplata y efectivo',
   },

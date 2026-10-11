@@ -8,9 +8,20 @@
     "dev": "astro dev",
     "build": "npm run check:copy && astro build",
     "preview": "astro preview",
-    "check:copy": "node scripts/check-copy.mjs"
+    "check:copy": "node scripts/check-copy.mjs",
+    "start": "node dist/server/entry.mjs",
+    "test": "vitest run",
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:clear-demo": "node scripts/clear-demo.mjs"
   },
   "dependencies": {
-    "astro": "5.18.2"
+    "@astrojs/node": "^9.5.5",
+    "@astrojs/vercel": "^8.2.11",
+    "astro": "5.18.2",
+    "postgres": "^3.4.9"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.8",
+    "vitest": "^3.2.7"
   }
 }

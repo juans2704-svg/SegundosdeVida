@@ -60,6 +60,7 @@ const d = t.donate;
               <small>{d.frequency.monthlyHelp}</small>
             </span>
           </label>
+          <p class="monthly-intl" data-monthly-intl hidden>{d.frequency.monthlyIntl}</p>
         </fieldset>
 
         <fieldset class="pieces">
@@ -348,6 +349,16 @@ const d = t.donate;
   .pill small {
     font-weight: 500;
     font-size: 0.9rem;
+  }
+  .pill.is-disabled span {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .monthly-intl {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--ink-soft);
   }
   .pill input:checked + span {
     background: var(--yellow);

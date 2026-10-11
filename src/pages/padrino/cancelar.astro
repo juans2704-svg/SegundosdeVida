@@ -1,0 +1,81 @@
+---
+/** Cancelación del Plan Padrino con el enlace personal (?t=…) que recibe cada padrino. */
+import Base from '../../layouts/Base.astro';
+import { getStore } from '../../server/db';
+import { pieces } from '../../config/campaign';
+import { formatCOP } from '../../lib/format';
+
+export const prerender = false;
+
+const token = Astro.url.searchParams.get('t') ?? '';
+const s = /^[a-f0-9]{20,80}$/.test(token) ? await getStore().getSubscriptionByCancelToken(token) : null;
+const piece = s ? pieces.find((p) => p.id === s.pieceId) : null;
+---
+
+<Base title="Plan Padrino · La SUPERCASA">
+  <meta name="robots" content="noindex" slot="head" />
+  <main class="wrap cancel">
+    <p><a href="/">← Volver a la SUPERCASA</a></p>
+    {
+      !s ? (
+        <h1>No encontramos ese plan</h1>
+        <p>Revisa que el enlace esté completo o escríbenos y te ayudamos.</p>
+      ) : s.status === 'cancelled' ? (
+        <h1>Tu Plan Padrino está cancelado</h1>
+        <p>No haremos más cobros. Gracias por todo lo que construiste con nosotros 💛</p>
+      ) : (
+        <div class="card box" data-cancel>
+          <h1>¿Quieres cancelar tu Plan Padrino?</h1>
+          <p>
+            Hoy pones <strong>{piece?.icon} {piece?.label}</strong> cada mes ({formatCOP(s.amountCOP)}).
+            {s.nextChargeOn && <> Próximo cobro: <strong>{s.nextChargeOn}</strong>.</>}
+          </p>
+          <p>Si cancelas, no haremos más cobros. Lo que ya pusiste se queda en la casa para siempre.</p>
+          <div class="btns">
+            <a class="btn btn--primary" href="/">Seguir siendo padrino 💛</a>
+            <button class="btn btn--white" type="button" data-token={token}>Cancelar mi plan</button>
+          </div>
+          <p class="msg" aria-live="polite" />
+        </div>
+      )
+    }
+  </main>
+</Base>
+
+<script>
+  const box = document.querySelector<HTMLElement>('[data-cancel]');
+  const btn = box?.querySelector<HTMLButtonElement>('button[data-token]');
+  btn?.addEventListener('click', async () => {
+    btn.disabled = true;
+    const res = await fetch('/api/subscriptions/cancel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: btn.dataset.token }),
+    });
+    const msg = box!.querySelector<HTMLElement>('.msg')!;
+    msg.textContent = res.ok ? 'Listo. Tu plan quedó cancelado y no haremos más cobros. Gracias, héroe 💛' : 'No pudimos cancelarlo. Escríbenos y lo hacemos por ti.';
+    if (!res.ok) btn.disabled = false;
+  });
+</script>
+
+<style>
+  .cancel {
+    max-width: 680px;
+    padding-block: 48px 80px;
+  }
+  .box {
+    padding: clamp(18px, 4vw, 32px);
+  }
+  .box h1 {
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+  }
+  .btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+  .msg {
+    margin: 1rem 0 0;
+    font-weight: 700;
+  }
+</style>

@@ -112,6 +112,7 @@ const es = {
     customLabel: '¿Cuánto quieres aportar?',
     customEmpty: 'Escríbele a Calvito cuánto quieres aportar 💛',
     customMin: (min: string) => `El aporte mínimo es de ${min} 💛`,
+    customMax: 'Para aportes tan grandes, escríbenos a tesorería y te ayudamos 💛',
     next: 'Ver mi pieza en la casa →',
     back: '← elegir otra pieza',
     frequency: {
@@ -120,7 +121,8 @@ const es = {
       monthly: '💛 Plan Padrino mensual',
       monthlyHelp: 'Cada mes pones una pieza más.',
       monthlyPrice: '/ mes',
-      monthlyNote: 'Puedes cancelarlo cuando quieras escribiendo a tesorería.',
+      monthlyNote: 'Puedes cancelarlo cuando quieras con el enlace que te llega por correo.',
+      monthlyIntl: 'Por ahora el Plan Padrino está disponible solo desde Colombia.',
     },
     fields: {
       name: 'Tu nombre o apodo de héroe',

@@ -8,8 +8,9 @@ Una sola página con scroll narrativo, la casa animada que avanza con el recaudo
 ```bash
 npm install
 npm run dev        # http://localhost:4321
-npm run build      # revisa el copy y genera /dist (sitio estático)
-npm run preview
+npm run build      # revisa el copy y genera /dist
+npm start          # servidor Node con la página y la API
+npm test           # pruebas automáticas
 ```
 
 - `/?demo=1` muestra un control para ver la casa en todas sus etapas (0–100%).
@@ -48,7 +49,7 @@ src/
   pages/           index, politica-de-datos, terminos
 ```
 
-- **Estático** (Astro, sin framework de UI): ~13 KB de JS comprimido y SVG en línea, pensado para celulares de gama baja.
+- **Estático + servidor** (Astro, sin framework de UI): la página se sirve estática desde CDN y solo `/api`, `/admin` y `/padrino` corren en el servidor.
 - **Casa por fases**: una ilustración cada 5 % (`public/img/casa/`, configuradas en `src/config/house.ts`), con fundido al cambiar de fase. Las especificaciones para el ilustrador están en `docs/brief-casa-fases.md`. Las 21 fases (0 a 100 %) están alineadas entre sí. Al cruzar una etapa (32 / 47 / 62 / 78 / 95 %) aparece además el mensaje de Calvito.
 - **Donación**: región (Colombia → Wompi en COP · otro país → PayPal en USD), pieza o monto libre, única o Plan Padrino, datos con consentimiento (Ley 1581), confirmación con impacto y luego el checkout. Referencia `SC-{timestamp}-{monto}`.
 - **Conversión**: botón principal en la primera pantalla, la donación justo después de la portada y barra fija "Pon tu pieza" en celular. La portada muestra la cuenta regresiva al 30 de noviembre y la próxima pieza de la casa con lo que falta (cada 5 % = $12.500.000). Mientras lo recaudado sea menor a `showRaisedFrom`, se muestra "La campaña acaba de arrancar" en vez de "$0".
@@ -73,10 +74,14 @@ Todo lo marcado `PENDIENTE` en el código:
 - [x] Tarifa de Wompi (2,65 % + $700 + IVA)
 - [ ] Tarifa real de PayPal
 
-## Fase 2 (backend)
+## Fase 2: servidor y pagos
 
-- Supabase: tablas `donations`, `campaign`, `subscribers`, `shares`. `lib/progress.ts` lee el recaudo en tiempo real.
-- Edge Function que firma la integridad de Wompi (`/api/wompi/signature`) y webhook con verificación de firma.
-- Plan Padrino: tokenización de Wompi y cobros recurrentes; suscripciones de PayPal.
-- PayPal: implementar `lib/payments/paypal.ts` (o Stripe, con el mismo contrato).
-- Panel de administración, emails (Resend/Brevo), carnet generado en el servidor, versión en inglés (`i18n/en.ts`).
+Ya implementado en modo de pruebas. La guía completa de puesta en marcha (Supabase, Wompi, Vercel y la checklist del sandbox) está en [`docs/fase-2-servidor.md`](docs/fase-2-servidor.md).
+
+- **Base de datos**: PostgreSQL / Supabase (`supabase/migrations/`, `npm run db:migrate`).
+- **Servidor**: endpoints en `src/pages/api/`, lógica en `src/server/`. El monto lo calcula el servidor (`src/lib/pricing.ts`) y una donación solo se aprueba cuando Wompi lo confirma.
+- **Plan Padrino**: tarjeta tokenizada por Wompi, primer cobro inmediato y cobros mensuales con un cron diario (`vercel.json`). Hace 3 reintentos y luego pausa el plan; el padrino puede cancelarlo.
+- **Panel** `/admin` (roles admin y editor): recaudo, donaciones, padrinos, aportes manuales y exportación CSV.
+- **Pruebas**: `npm test` (con `TEST_DATABASE_URL` también contra PostgreSQL).
+
+Pendiente: correos de confirmación, PayPal y proceso de certificados.

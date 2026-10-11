@@ -3,10 +3,14 @@
  * A pieza → B frecuencia y datos → D impacto + "Confirmar con amor" → C checkout → resultado.
  */
 import { pieces, type Piece } from '../config/campaign';
-import { payments, regions, type Region } from '../config/payments';
-import { formatCOP, formatMoney, formatUSD, formatUSDCents, copToUSD, usdToCOP, feeCover } from '../lib/format';
+import { regions, type Region } from '../config/payments';
+import { quote } from '../lib/pricing';
+import { formatCOP, formatMoney, formatUSD, formatUSDCents, copToUSD, feeCover } from '../lib/format';
 import { buildReference, providerFor, type DonationOrder, type Frequency } from '../lib/payments';
-import { addDonation } from './progress';
+import { demoProvider } from '../lib/payments/demo';
+import { openCheckout, tokenizeCard, type ServerCheckout } from '../lib/payments/wompi';
+import * as api from './api';
+import { addDonation, applyServerProgress } from './progress';
 import { drawCarnet, carnetBlob, type CarnetData } from './carnet';
 import { track } from './analytics';
 import t from '../i18n/es';
@@ -51,17 +55,10 @@ function init(form: HTMLFormElement) {
   const frequency = () => (form.querySelector<HTMLInputElement>('input[name=frequency]:checked')?.value ?? 'once') as Frequency;
 
   // ---------- Montos ----------
+  /** Mismo cálculo que hace el servidor (src/lib/pricing.ts). */
   function amounts(): { amountCOP: number; amount: number } | { error: string } {
-    const p = piece();
-    const cur = currency();
-    if (p.amount !== null) {
-      return { amountCOP: p.amount, amount: cur === 'COP' ? p.amount : copToUSD(p.amount) };
-    }
-    const raw = Number(field('custom').value.replace(/\D/g, ''));
-    if (!raw) return { error: d.customEmpty };
-    const min = payments.minAmount[cur];
-    if (raw < min) return { error: d.customMin(formatMoney(min, cur)) };
-    return cur === 'COP' ? { amountCOP: raw, amount: raw } : { amountCOP: usdToCOP(raw), amount: raw };
+    const qt = quote({ region: region(), pieceId: piece().id, frequency: frequency(), custom: customValue(), coverFee: false });
+    return 'error' in qt ? qt : { amountCOP: qt.amountCOP, amount: qt.amount };
   }
 
   function updatePrices() {
@@ -195,6 +192,31 @@ function init(form: HTMLFormElement) {
   }
 
   // ---------- Pago ----------
+  function customValue() {
+    const raw = Number(field('custom').value.replace(/\D/g, ''));
+    return raw || undefined;
+  }
+
+  function donorData() {
+    return {
+      name: field('name').value.trim(),
+      email: field('email').value.trim(),
+      phone: field('phone').value.trim(),
+      consent: field('consent').checked,
+      showOnWall: field('wall').checked,
+    };
+  }
+
+  function certificateData() {
+    return field('certificate').checked
+      ? {
+          name: field('certName').value.trim() || field('name').value.trim(),
+          docType: (form.elements.namedItem('docType') as HTMLSelectElement).value,
+          docNumber: field('docNumber').value.trim(),
+        }
+      : undefined;
+  }
+
   async function pay() {
     if (submitting || !validateStep1() || !validateStep2()) return;
     const a = amounts();
@@ -203,43 +225,73 @@ function init(form: HTMLFormElement) {
     const btn = q<HTMLButtonElement>('[data-confirm]');
     btn.disabled = true;
 
-    const certificate = field('certificate').checked
-      ? {
-          name: field('certName').value.trim() || field('name').value.trim(),
-          docType: (form.elements.namedItem('docType') as HTMLSelectElement).value,
-          docNumber: field('docNumber').value.trim(),
-        }
-      : undefined;
     const order: DonationOrder = {
       reference: buildReference(a.amountCOP),
       amountCOP: a.amountCOP,
       amount: a.amount,
       fee: fee(a.amount),
-      certificate,
+      certificate: certificateData(),
       currency: currency(),
       frequency: frequency(),
       pieceId: piece().id,
-      donor: {
-        name: field('name').value.trim(),
-        email: field('email').value.trim(),
-        phone: field('phone').value.trim(),
-        consent: field('consent').checked,
-        showOnWall: field('wall').checked,
-      },
+      donor: donorData(),
     };
 
     try {
-      const result = await providerFor(region()).pay(order);
-      handleResult(result.status, order);
-    } catch {
-      handleResult('error', order);
+      const server = await api.firstProgress();
+      const status = server ? await payWithServer(order, server.payments) : (await providerFor(region()).pay(order)).status;
+      handleResult(status, order, Boolean(server));
+    } catch (err) {
+      handleResult('error', order, true, err instanceof api.ApiError ? err.message : '');
     } finally {
       submitting = false;
       btn.disabled = false;
     }
   }
 
-  function handleResult(status: string, order: DonationOrder) {
+  /** Flujo con servidor: el servidor calcula el monto, firma el pago y confirma el resultado con Wompi. */
+  async function payWithServer(order: DonationOrder, cfg: { simulated: boolean; publicKey: string }): Promise<string> {
+    const body = {
+      region: region(),
+      pieceId: order.pieceId,
+      frequency: order.frequency,
+      custom: customValue(),
+      coverFee: field('coverFee').checked,
+      donor: { ...order.donor, certificate: order.certificate ?? null },
+    };
+    const provider = providerFor(region());
+
+    if (order.frequency === 'monthly') {
+      let token: string;
+      if (cfg.simulated) {
+        const { status } = await demoProvider(provider).pay(order);
+        if (status === 'cancelled') return 'cancelled';
+        token = `tok_demo_${status}`;
+      } else {
+        const t = await tokenizeCard(cfg.publicKey);
+        if (!t) return 'cancelled';
+        token = t.token;
+      }
+      const r = await api.post<{ reference: string; status: string }>('/api/subscriptions', { ...body, payment: { token } });
+      order.reference = r.reference;
+      return r.status === 'pending' ? (await api.pollStatus(r.reference)).status : r.status;
+    }
+
+    const checkout = await api.post<ServerCheckout & { provider: string; simulated: boolean }>('/api/donations', body);
+    order.reference = checkout.reference;
+    if (checkout.simulated) {
+      const { status } = await demoProvider(provider).pay(order);
+      if (status === 'cancelled' || status === 'error') return status;
+      await api.post('/api/dev/simulate', { reference: checkout.reference, status: status.toUpperCase() });
+      return (await api.pollStatus(checkout.reference, undefined, 5000)).status;
+    }
+    if (checkout.provider !== 'wompi') return 'error';
+    const result = await openCheckout(checkout, order.donor);
+    if (result.status === 'cancelled') return 'cancelled';
+    return (await api.pollStatus(checkout.reference, result.transactionId)).status;
+  }
+
+  function handleResult(status: string, order: DonationOrder, withServer = false, serverMessage = '') {
     if (status === 'cancelled') return; // el usuario cerró el checkout: sigue en el paso 3
 
     const msg = q('[data-result-msg]');
@@ -257,15 +309,31 @@ function init(form: HTMLFormElement) {
       });
       msg.textContent = d.approved;
       showStep('result');
-      // Fase 2: el recaudo real lo suma el webhook; aquí se refleja en la sesión.
-      addDonation(order.amountCOP);
-      if (order.donor.showOnWall) addToWall(order);
+      if (withServer) refreshFromServer();
+      else {
+        addDonation(order.amountCOP);
+        if (order.donor.showOnWall) addToWall(order);
+      }
       showThanks(order);
       return;
     }
     if (status !== 'pending') track('payment_failed', { status, value, currency: order.currency });
-    msg.textContent = status === 'pending' ? d.pending : status === 'declined' ? d.declined : d.networkError;
+    msg.textContent =
+      serverMessage || (status === 'pending' ? d.pending : status === 'declined' || status === 'voided' ? d.declined : d.networkError);
     showStep('result');
+  }
+
+  /** El Plan Padrino está disponible solo desde Colombia (Wompi). */
+  function applyRegion() {
+    const intl = region() === 'intl';
+    const monthlyInput = form.querySelector<HTMLInputElement>('input[name=frequency][value=monthly]')!;
+    monthlyInput.disabled = intl;
+    monthlyInput.closest('label')?.classList.toggle('is-disabled', intl);
+    q('[data-monthly-intl]').hidden = !intl;
+    if (intl && monthlyInput.checked) {
+      form.querySelector<HTMLInputElement>('input[name=frequency][value=once]')!.checked = true;
+      applyFrequency();
+    }
   }
 
   // ---------- Eventos ----------
@@ -273,6 +341,7 @@ function init(form: HTMLFormElement) {
     const target = e.target as HTMLInputElement;
     if (target.name === 'region') {
       updatePrices();
+      applyRegion();
       field('custom').value = '';
     }
     if (target.name === 'piece') toggleCustom();
@@ -320,6 +389,49 @@ function init(form: HTMLFormElement) {
 
   updatePrices();
   applyFrequency();
+  applyRegion();
+  handleReturnFromWompi(showStep, q);
+}
+
+/** Wompi devuelve a la persona con `?id=<transacción>` después de PSE o Bancolombia. */
+async function handleReturnFromWompi(showStep: (s: string) => void, q: <T extends HTMLElement = HTMLElement>(sel: string) => T) {
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  if (!id || !(await api.online())) return;
+  history.replaceState(null, '', location.pathname);
+  try {
+    const r = await api.get<{ reference: string; status: string; frequency: Frequency; pieceId: string; donorName: string | null; amount: number; currency: 'COP' | 'USD' }>(
+      `/api/wompi/transaction?id=${encodeURIComponent(id)}`,
+    );
+    const msg = q('[data-result-msg]');
+    q('[data-retry]').hidden = r.status === 'approved' || r.status === 'pending';
+    if (r.status === 'approved') {
+      const piece = pieces.find((p) => p.id === r.pieceId);
+      msg.textContent = d.approved;
+      showStep('result');
+      refreshFromServer();
+      showThanks({
+        reference: r.reference,
+        amountCOP: piece?.amount ?? r.amount,
+        amount: r.amount,
+        fee: 0,
+        currency: r.currency,
+        frequency: r.frequency,
+        pieceId: r.pieceId,
+        donor: { name: r.donorName ?? '', email: '', phone: '', consent: true, showOnWall: false },
+      });
+    } else {
+      msg.textContent = r.status === 'pending' ? d.pending : d.declined;
+      showStep('result');
+    }
+  } catch {
+    /* si no se encuentra la transacción, la página sigue normal */
+  }
+}
+
+async function refreshFromServer() {
+  const p = await api.refreshProgress();
+  if (p) applyServerProgress(p);
 }
 
 // ---------- Muro de héroes ----------
