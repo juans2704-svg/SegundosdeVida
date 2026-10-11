@@ -4,7 +4,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import postgres from 'postgres';
 
-const url = process.env.DATABASE_URL;
+const raw = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+const url = raw && raw.replace(/[?&](sslmode|supa)=[^&]*/g, '').replace(/^([^?]*)&/, '$1?');
 if (!url) {
   console.error('✖ Falta DATABASE_URL (cadena de conexión de Postgres / Supabase).');
   process.exit(1);
