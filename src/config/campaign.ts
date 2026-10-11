@@ -207,12 +207,13 @@ export const foundation = {
   whatsapp: '',
   /** La fundación emite certificado de donación a personas naturales y jurídicas. */
   issuesCertificates: true,
-  social: {
-    instagram: 'https://instagram.com/', // PENDIENTE
-    facebook: 'https://facebook.com/', // PENDIENTE
-    tiktok: 'https://tiktok.com/', // PENDIENTE
-    whatsapp: 'https://wa.me/', // PENDIENTE
-  },
+  social: [
+    { name: 'Instagram', url: 'https://www.instagram.com/segundosdevidafundacion/' },
+    { name: 'Facebook', url: 'https://www.facebook.com/fundsegundosdevida' },
+    { name: 'TikTok', url: 'https://www.tiktok.com/@fundacionsegundosdevida' },
+    { name: 'YouTube', url: 'https://www.youtube.com/@segundosdevidaFSV' },
+    { name: 'Spotify (pódcast)', url: 'https://open.spotify.com/show/033jb41KEgnrdwXP5Xx31w' },
+  ],
 };
 
 /**

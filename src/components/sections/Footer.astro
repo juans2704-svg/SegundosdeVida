@@ -32,10 +32,24 @@ const year = new Date().getFullYear();
     <nav aria-label={f.follow}>
       <p class="footer__label">{f.follow}</p>
       <ul class="social">
-        <li><a href={foundation.social.instagram} target="_blank" rel="noopener">Instagram</a></li>
-        <li><a href={foundation.social.facebook} target="_blank" rel="noopener">Facebook</a></li>
-        <li><a href={foundation.social.tiktok} target="_blank" rel="noopener">TikTok</a></li>
-        <li><a href={foundation.social.whatsapp} target="_blank" rel="noopener">WhatsApp</a></li>
+        {
+          foundation.social.map((s) => (
+            <li>
+              <a href={s.url} target="_blank" rel="noopener">
+                {s.name}
+              </a>
+            </li>
+          ))
+        }
+        {
+          foundation.whatsapp && (
+            <li>
+              <a href={`https://wa.me/${foundation.whatsapp}`} target="_blank" rel="noopener">
+                WhatsApp
+              </a>
+            </li>
+          )
+        }
       </ul>
     </nav>
   </div>
@@ -102,5 +116,11 @@ const year = new Date().getFullYear();
   }
   .copy {
     margin-top: 2rem;
+  }
+  /* Deja espacio para la barra fija "Pon tu pieza" en celular */
+  @media (max-width: 899px) {
+    .footer {
+      padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px));
+    }
   }
 </style>

@@ -27,8 +27,9 @@ export const formatMoney = (value: number, currency: 'COP' | 'USD') =>
 
 /** Valor extra para que, después de la comisión de la pasarela, llegue completo el aporte. */
 export function feeCover(amount: number, currency: 'COP' | 'USD') {
-  const { pct, fixed } = payments.fees[currency];
-  const gross = (amount + fixed) / (1 - pct);
+  const { pct, fixed, vat } = payments.fees[currency];
+  // La comisión (pct·total + fijo) lleva IVA encima: total − (1+IVA)(pct·total + fijo) = aporte
+  const gross = (amount + fixed * (1 + vat)) / (1 - pct * (1 + vat));
   const extra = gross - amount;
   return currency === 'COP' ? Math.ceil(extra / 100) * 100 : Math.ceil(extra * 100) / 100;
 }

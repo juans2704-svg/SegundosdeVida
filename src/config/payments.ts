@@ -23,11 +23,12 @@ export const payments = {
 
   /**
    * Comisión de la pasarela, para la opción "cubrir la comisión".
-   * PENDIENTE: confirmar tarifas del contrato (brief §13: 2,99 % + $900 en Wompi).
+   * COP: Wompi Plan Avanzado, 2,65 % + $700 + IVA (19 %) por transacción exitosa.
+   * USD: PENDIENTE tarifa real de PayPal (valor de referencia).
    */
   fees: {
-    COP: { pct: 0.0299, fixed: 900 },
-    USD: { pct: 0.054, fixed: 0.3 },
+    COP: { pct: 0.0265, fixed: 700, vat: 0.19 },
+    USD: { pct: 0.054, fixed: 0.3, vat: 0 },
   },
 
   wompi: {

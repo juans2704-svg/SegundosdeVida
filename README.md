@@ -63,13 +63,15 @@ Todo lo marcado `PENDIENTE` en el código:
 - [ ] Artes de los Super Calvitos en mayor resolución (ideal ≥ 800px, fondo transparente) y foto real de la obra
 - [ ] Recaudado inicial y desglose real del presupuesto por etapa
 - [x] NIT, régimen, registro, dirección, correo y teléfono (certificado de Cámara de Comercio y RUT)
-- [ ] Redes sociales y correo de tesorería (si es distinto)
+- [x] Redes sociales (Instagram, Facebook, TikTok, YouTube, Spotify)
+- [ ] Correo de tesorería (si es distinto)
 - [ ] Textos legales: política de datos y términos de donación
 - [ ] Tasa de referencia COP/USD
 - [ ] Dominio definitivo (`astro.config.mjs`)
 - [ ] WhatsApp de la campaña (`foundation.whatsapp`): activa el botón de WhatsApp para empresas
 - [ ] IDs de GA4 y Meta Pixel
-- [ ] Tarifas reales de Wompi y PayPal para la opción de cubrir la comisión
+- [x] Tarifa de Wompi (2,65 % + $700 + IVA)
+- [ ] Tarifa real de PayPal
 
 ## Fase 2 (backend)
 
