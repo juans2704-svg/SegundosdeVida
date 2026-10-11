@@ -165,8 +165,8 @@ const es = {
     retry: 'Intentar otra vez',
     restart: 'Poner otra pieza',
     trust: [
-      { icon: '🛡️', text: 'Fundación sin ánimo de lucro' },
-      { icon: '🧾', text: 'Certificado de donación para personas y empresas' },
+      { icon: '🛡️', text: 'Fundación sin ánimo de lucro desde 2013' },
+      { icon: '🧾', text: 'Certificado de donación (Régimen Tributario Especial)' },
       { icon: '🔒', text: 'Pago seguro con Wompi y PayPal' },
       { icon: '📊', text: 'Informe público de cada peso' },
     ],
@@ -260,9 +260,12 @@ const es = {
     foundationTitle: 'La fundación',
     nit: 'NIT',
     registry: 'Registro',
+    regime: 'Régimen',
+    oversight: 'Vigilancia',
+    address: 'Dirección',
     contact: 'Contacto',
     website: 'Conoce más en',
-    placeholderNote: 'Datos pendientes de confirmar por la fundación.',
+    placeholderNote: 'Desglose provisional: pendiente de confirmar por la fundación.',
   },
 
   footer: {

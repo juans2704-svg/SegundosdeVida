@@ -73,10 +73,19 @@ const progress = getInitialProgress();
           <dl>
             <dt>{tr.nit}</dt>
             <dd>{foundation.nit}</dd>
+            <dt>{tr.regime}</dt>
+            <dd>{foundation.taxRegime}</dd>
             <dt>{tr.registry}</dt>
             <dd>{foundation.registry}</dd>
+            <dt>{tr.oversight}</dt>
+            <dd>{foundation.oversight}</dd>
+            <dt>{tr.address}</dt>
+            <dd>{foundation.address}</dd>
             <dt>{tr.contact}</dt>
-            <dd><a href={`mailto:${foundation.email}`}>{foundation.email}</a></dd>
+            <dd>
+              <a href={`mailto:${foundation.email}`}>{foundation.email}</a><br />
+              <a href={`tel:+57${foundation.phone.replace(/\D/g, '')}`}>{foundation.phone}</a>
+            </dd>
           </dl>
           <p>
             {tr.website} <a href={foundation.website} target="_blank" rel="noopener">segundosdevida.com</a>

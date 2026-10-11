@@ -62,7 +62,8 @@ Todo lo marcado `PENDIENTE` en el código:
 
 - [ ] Artes de los Super Calvitos en mayor resolución (ideal ≥ 800px, fondo transparente) y foto real de la obra
 - [ ] Recaudado inicial y desglose real del presupuesto por etapa
-- [ ] NIT, registro, correos de contacto y tesorería, redes sociales
+- [x] NIT, régimen, registro, dirección, correo y teléfono (certificado de Cámara de Comercio y RUT)
+- [ ] Redes sociales y correo de tesorería (si es distinto)
 - [ ] Textos legales: política de datos y términos de donación
 - [ ] Tasa de referencia COP/USD
 - [ ] Dominio definitivo (`astro.config.mjs`)

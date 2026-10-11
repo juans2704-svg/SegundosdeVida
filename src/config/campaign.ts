@@ -192,12 +192,17 @@ export const foundation = {
   name: 'Fundación Segundos de Vida',
   shortName: 'Segundos de Vida',
   website: 'https://segundosdevida.com',
-  // PENDIENTE: datos legales y de contacto reales.
-  nit: 'PENDIENTE',
-  registry: 'PENDIENTE (registro ESAL / Cámara de Comercio)',
-  email: 'PENDIENTE@segundosdevida.com',
-  treasuryEmail: 'PENDIENTE@segundosdevida.com',
-  phone: 'PENDIENTE',
+  // Fuente: Certificado de existencia y representación legal (Cámara de Comercio
+  // de Bogotá, 28 de julio de 2026) y RUT de la DIAN.
+  nit: '900.649.809-2',
+  taxRegime: 'Régimen Tributario Especial',
+  registry: 'Cámara de Comercio de Bogotá · Inscripción S0044203 del 8 de abril de 2013 · Renovada en 2026',
+  oversight: 'Alcaldía Mayor de Bogotá',
+  address: 'Carrera 28 Bis No. 51-33, Bogotá D.C.',
+  email: 'admonsegundosdevida@hotmail.com',
+  /** PENDIENTE: confirmar si tesorería tiene un correo distinto. */
+  treasuryEmail: 'admonsegundosdevida@hotmail.com',
+  phone: '316 524 6087',
   /** PENDIENTE: WhatsApp de la campaña, solo números con indicativo (ej. '573001234567'). */
   whatsapp: '',
   /** La fundación emite certificado de donación a personas naturales y jurídicas. */
