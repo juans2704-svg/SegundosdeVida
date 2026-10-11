@@ -96,7 +96,8 @@ create table payment_events (
 create index payment_events_reference_idx on payment_events (reference);
 
 -- Recaudo público: suma de aportes aprobados y número de héroes (personas distintas).
-create view campaign_progress as
+-- security_invoker: la vista respeta el RLS de `donations` (sin acceso público).
+create view campaign_progress with (security_invoker = true) as
 select
   coalesce(sum(amount_cop), 0)::bigint as raised_cop,
   count(distinct coalesce(lower(donor_email), id::text))::integer as heroes,
@@ -105,7 +106,7 @@ from donations
 where status = 'approved';
 
 -- Mantiene updated_at al día.
-create function touch_updated_at() returns trigger language plpgsql as $$
+create function touch_updated_at() returns trigger language plpgsql set search_path = '' as $$
 begin
   new.updated_at = now();
   return new;
@@ -120,3 +121,12 @@ create trigger subscriptions_touch before update on subscriptions
 alter table subscriptions enable row level security;
 alter table donations enable row level security;
 alter table payment_events enable row level security;
+
+-- Defensa extra en Supabase: los roles de la API pública no tienen permisos.
+do $$
+begin
+  if exists (select 1 from pg_roles where rolname = 'anon') then
+    revoke all on subscriptions, donations, payment_events, campaign_progress from anon, authenticated;
+  end if;
+end;
+$$;

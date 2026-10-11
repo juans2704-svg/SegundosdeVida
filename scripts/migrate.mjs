@@ -16,6 +16,7 @@ const dir = join(process.cwd(), 'supabase', 'migrations');
 
 try {
   await sql`create table if not exists schema_migrations (name text primary key, applied_at timestamptz not null default now())`;
+  await sql`alter table schema_migrations enable row level security`;
   const done = new Set((await sql`select name from schema_migrations`).map((r) => r.name));
   const files = readdirSync(dir).filter((f) => f.endsWith('.sql')).sort();
   let applied = 0;
