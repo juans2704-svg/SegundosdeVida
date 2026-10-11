@@ -1,19 +1,20 @@
 /**
  * Fases ilustradas de la SUPERCASA (una imagen cada 5 %), según docs/brief-casa-fases.md.
  *
- * Para reemplazar una fase: guardar `supercasa-XXX-1200.webp` y `supercasa-XXX-720.webp`
- * en public/img/casa/, alineadas con las demás y del mismo tamaño (1200 × 893 y 720 × 536).
+ * Para reemplazar una fase: guardar `supercasa-XXX-{800,1400,2000}.webp` en public/img/casa/,
+ * alineadas con las demás y con la misma proporción (2000 × 1489). Las actuales se ampliaron ×4
+ * con Real-ESRGAN para que se vean nítidas en pantallas de alta densidad.
  */
 export const houseFrames = {
   available: Array.from({ length: 21 }, (_, i) => i * 5),
-  width: 1200,
-  height: 893,
-  widths: [720, 1200],
+  width: 2000,
+  height: 1489,
+  widths: [800, 1400, 2000],
 };
 
 const pad = (n: number) => String(n).padStart(3, '0');
 
-export const frameSrc = (pct: number, width = 1200) => `/img/casa/supercasa-${pad(pct)}-${width}.webp`;
+export const frameSrc = (pct: number, width = 1400) => `/img/casa/supercasa-${pad(pct)}-${width}.webp`;
 
 export const frameSrcset = (pct: number) => houseFrames.widths.map((w) => `${frameSrc(pct, w)} ${w}w`).join(', ');
 
