@@ -13,7 +13,7 @@ const { who, alt, eager = false, class: className = '' } = Astro.props;
 const c = characters[who];
 ---
 
-<figure class:list={['character', className]}>
+<figure class:list={['character', { 'character--cutout': 'cutout' in c && c.cutout }, className]}>
   <img
     src={c.src}
     width={c.width}
@@ -34,6 +34,17 @@ const c = characters[who];
     background: var(--sky);
     box-shadow: var(--shadow);
     transform: rotate(-2deg);
+  }
+  .character--cutout {
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+    background: none;
+    box-shadow: none;
+    transform: none;
+  }
+  .character--cutout img {
+    filter: drop-shadow(0 12px 14px rgb(29 43 79 / 0.25));
   }
   .character img {
     display: block;

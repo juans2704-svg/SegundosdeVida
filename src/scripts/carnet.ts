@@ -112,26 +112,16 @@ export async function drawCarnet(canvas: HTMLCanvasElement, data: CarnetData) {
   ctx.restore();
 
   // Personaje
-  const [hero, brand] = await Promise.all([loadImage(characters.calvito.src), loadImage(logo.src)]);
-  const S = 480;
-  const X = (W - S) / 2;
-  const Y = 270;
+  const hero = characters.constructor;
+  const [heroImg, brand] = await Promise.all([loadImage(hero.src), loadImage(logo.src)]);
+  // Calvito constructor recortado, de pie sobre la tarjeta de datos
+  const HH = 560;
+  const HW = (HH * hero.width) / hero.height;
   ctx.save();
-  ctx.translate(W / 2, Y + S / 2);
-  ctx.rotate(-0.035);
-  ctx.translate(-W / 2, -(Y + S / 2));
-  roundRect(ctx, X, Y + 14, S, S, 56);
-  ctx.fillStyle = INK;
-  ctx.fill();
-  roundRect(ctx, X, Y, S, S, 56);
-  ctx.save();
-  ctx.clip();
-  ctx.drawImage(hero, X, Y, S, S);
-  ctx.restore();
-  roundRect(ctx, X, Y, S, S, 56);
-  ctx.lineWidth = 10;
-  ctx.strokeStyle = INK;
-  ctx.stroke();
+  ctx.shadowColor = 'rgba(29,43,79,.35)';
+  ctx.shadowBlur = 30;
+  ctx.shadowOffsetY = 16;
+  ctx.drawImage(heroImg, (W - HW) / 2, 245, HW, HH);
   ctx.restore();
 
   // Tarjeta de datos

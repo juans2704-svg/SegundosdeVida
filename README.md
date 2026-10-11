@@ -24,7 +24,7 @@ npm run preview
 | Fecha límite, monto desde el que se muestra lo recaudado, donación igualada | `src/config/campaign.ts` (`deadline`, `showRaisedFrom`, `matching`) |
 | GA4 y Meta Pixel | `.env` (`PUBLIC_GA4_ID`, `PUBLIC_META_PIXEL_ID`) — ver `src/config/analytics.ts` |
 | Todos los textos (guiones, botones, mensajes de error, mensajes para compartir) | `src/i18n/es.ts` |
-| Artes oficiales (personajes, logo, dibujo de la casa) | `public/img/` + `src/config/characters.ts` |
+| Artes oficiales (personajes, logo, dibujo de la casa) | `public/img/` + `src/config/characters.ts` (los recortes sin fondo están en `public/img/calvitos/`) |
 | Colores y tipografía | `src/styles/global.css` (variables `:root`) |
 
 `npm run build` falla si algún texto usa la palabra restringida del brief (§4.2).

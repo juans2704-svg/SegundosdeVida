@@ -1,5 +1,6 @@
 ---
 import { foundation } from '../../config/campaign';
+import Character from '../characters/Character.astro';
 import t from '../../i18n/es';
 
 const c = t.companies;
@@ -25,6 +26,11 @@ const mail = `mailto:${foundation.email}?subject=${encodeURIComponent('Empresa â
       </div>
       <p class="companies__email">{foundation.email}</p>
     </div>
+    <div class="companies__side">
+      <div class="companies__hero">
+        <Character who="empresaria" />
+        <p class="companies__bubble">{c.speech}</p>
+      </div>
     <ul class="options">
       {
         c.options.map((o) => (
@@ -38,6 +44,7 @@ const mail = `mailto:${foundation.email}?subject=${encodeURIComponent('Empresa â
         ))
       }
     </ul>
+    </div>
   </div>
 </section>
 
@@ -78,6 +85,26 @@ const mail = `mailto:${foundation.email}?subject=${encodeURIComponent('Empresa â
     font-size: 0.9rem;
     opacity: 0.85;
     user-select: all;
+  }
+  .companies__side {
+    display: grid;
+    gap: 1.2rem;
+  }
+  .companies__hero {
+    display: grid;
+    grid-template-columns: minmax(90px, 140px) 1fr;
+    align-items: center;
+    gap: 1rem;
+  }
+  .companies__bubble {
+    margin: 0;
+    padding: 0.8rem 1.1rem;
+    border: 3px solid var(--white);
+    border-radius: 20px;
+    background: var(--yellow);
+    color: var(--ink);
+    font-weight: 800;
+    font-size: 1.15rem;
   }
   .options {
     display: grid;

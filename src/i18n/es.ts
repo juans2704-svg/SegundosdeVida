@@ -62,6 +62,14 @@ const es = {
       { icon: '🧸', title: 'Sala de juegos', text: 'Porque ser valiente también es seguir siendo niño.' },
       { icon: '🌻', title: 'Jardín en la azotea', text: 'Para tomar sol y mirar el cielo de Bogotá.' },
     ],
+    dreamsTitle: 'Sueñan en grande',
+    dreamsBody:
+      'Bomberos, policías, doctores… Los Super Calvitos ya saben qué quieren ser cuando sean grandes. Para llegar allá, hoy necesitan un hogar donde descansar y seguir soñando.',
+    dreams: [
+      { who: 'bombero', caption: '🚒 Quiero ser bombero' },
+      { who: 'policia', caption: '🚓 Quiero ser policía' },
+      { who: 'doctor', caption: '🩺 Quiero ser doctor' },
+    ],
     banner:
       'Los Super Calvitos son los valientes que luchan cada día. Tú puedes ser su héroe: no con capa, con amor.',
     cta: 'Quiero ser su héroe 💛',
@@ -172,6 +180,7 @@ const es = {
   companies: {
     eyebrow: 'Empresas',
     title: '¿Tu empresa quiere construir con nosotros?',
+    speech: '¡Las empresas también pueden ser héroes!',
     body: 'Patrocina una habitación, un piso o una etapa completa. Recibes certificado de donación y tu marca queda en el muro de héroes de la SUPERCASA.',
     options: [
       { icon: '🛏️', title: 'Una habitación', text: 'Equipada para un niño y su cuidador.' },
