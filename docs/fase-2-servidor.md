@@ -2,6 +2,15 @@
 
 Guía para poner en marcha los pagos reales de la SUPERCASA: Wompi (donación única y Plan Padrino mensual), base de datos y panel.
 
+## Estado actual (11 oct 2026)
+
+- **Supabase:** proyecto `supercasa` (organización KavanahOrg, us-east-1). Esquema aplicado.
+- **Vercel:** proyecto `supercasa` (equipo Spartanos), conectado al repositorio. Cada push publica.
+- **Conexión:** la integración Supabase ↔ Vercel crea `POSTGRES_URL` (solo Producción); el servidor la usa si no hay `DATABASE_URL`.
+- **Variables listas:** `POSTGRES_URL`, `PUBLIC_PAYMENTS_MODE=live`, `CRON_SECRET`.
+- **Faltan:** `ADMIN_PASSWORD`, `EDITOR_PASSWORD` (panel `/admin`) y las llaves de Wompi. Sin llaves, Producción muestra los pagos "en mantenimiento".
+- **Protección de Vercel:** activa en las direcciones `*.vercel.app`; el público no las ve hasta conectar el dominio propio o cambiar *Deployment Protection* a "Only Preview Deployments".
+
 ## Cómo funciona
 
 ```
