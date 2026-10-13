@@ -33,6 +33,10 @@ import t from '../../i18n/es';
     </div>
 
     <div class="dreams" data-reveal>
+      <div class="who" id="quienes">
+        <h3 class="who__title">🦸 {t.story.whoTitle}</h3>
+        <p class="who__text">{t.story.whoText}</p>
+      </div>
       <h3 class="dreams__title">{t.story.dreamsTitle}</h3>
       <p class="dreams__body">{t.story.dreamsBody}</p>
       <ul class="dreams__list">
@@ -122,6 +126,24 @@ import t from '../../i18n/es';
   .dreams {
     margin-top: clamp(48px, 7vw, 80px);
     text-align: center;
+  }
+  .who {
+    max-width: 680px;
+    margin: 0 auto clamp(36px, 5vw, 56px);
+    padding: clamp(1.1rem, 3vw, 1.6rem) clamp(1.1rem, 4vw, 2rem);
+    background: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+  }
+  .who__title {
+    font-size: clamp(1.25rem, 3vw, 1.6rem);
+    margin-bottom: 0.5rem;
+  }
+  .who__text {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.55;
   }
   .dreams__title {
     font-size: clamp(1.6rem, 3.6vw, 2.4rem);

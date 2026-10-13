@@ -3,6 +3,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const FORBIDDEN = /c[aá]ncer/i;
+// Única excepción, aprobada por la directora: la definición de los Super Calvitos.
+const ALLOWED = { file: join('src', 'i18n', 'es.ts'), phrase: 'diagnosticados con cáncer' };
 const ROOTS = ['src', 'public'];
 const EXT = /\.(astro|ts|js|mjs|md|json|html|svg|css)$/;
 
@@ -14,7 +16,10 @@ const walk = (dir) => {
     else if (EXT.test(name)) {
       readFileSync(path, 'utf8')
         .split('\n')
-        .forEach((line, i) => FORBIDDEN.test(line) && hits.push(`${path}:${i + 1}`));
+        .forEach((line, i) => {
+          const allowed = path === ALLOWED.file && line.replace(ALLOWED.phrase, '').search(FORBIDDEN) === -1;
+          if (FORBIDDEN.test(line) && !allowed) hits.push(`${path}:${i + 1}`);
+        });
     }
   }
 };

@@ -62,6 +62,10 @@ const es = {
       { icon: '🧸', title: 'Sala de juegos', text: 'Porque ser valiente también es seguir siendo niño.' },
       { icon: '🌻', title: 'Jardín en la azotea', text: 'Para tomar sol y mirar el cielo de Bogotá.' },
     ],
+    whoTitle: '¿Quiénes son los Super Calvitos?',
+    // Texto aprobado por la directora de la fundación: única excepción a la palabra restringida (scripts/check-copy.mjs).
+    whoText:
+      'Niños, adolescentes y jóvenes de escasos recursos, diagnosticados con cáncer, que reciben su tratamiento en Bogotá. No llevan capa, pero cada día en el hospital demuestran que los verdaderos héroes existen.',
     dreamsTitle: 'Sueñan en grande',
     dreamsBody:
       'Bomberos, pilotos, doctoras, chefs… Los Super Calvitos ya saben qué quieren ser cuando sean grandes. Para llegar allá, hoy necesitan un hogar donde descansar y seguir soñando.',
