@@ -7,6 +7,7 @@
  */
 import { randomBytes } from 'node:crypto';
 import { getStore } from './db';
+import { env } from './env';
 import type { Donation, DonationStatus, Subscription } from './db/types';
 import {
   getWompiConfig,
@@ -66,6 +67,15 @@ export interface Checkout {
   paymentUrl?: string;
 }
 
+/** Wompi se enciende con PUBLIC_WOMPI_ENABLED=true (mientras tanto, solo PayPal). */
+export const wompiEnabled = () => env('PUBLIC_WOMPI_ENABLED') === 'true' || payments.wompiEnabled;
+
+function assertWompiEnabled() {
+  if (!wompiEnabled()) {
+    throw Object.assign(new ValidationError('Por ahora recibimos los aportes por PayPal 💛'), { status: 503 });
+  }
+}
+
 function assertPaymentsConfigured() {
   if (getWompiConfig().mode === 'mock' && !simulationAllowed()) {
     throw Object.assign(new Error('Los pagos están en mantenimiento. Inténtalo en unos minutos 💛'), { status: 503 });
@@ -80,7 +90,10 @@ export async function createDonation(o: OrderInput): Promise<Checkout> {
     throw Object.assign(new ValidationError('El pago desde el exterior estará disponible muy pronto. Escríbenos y te ayudamos 💛'), { status: 503 });
   }
   // PayPal no depende de Wompi: funciona aunque Wompi aún no tenga llaves.
-  if (!viaPaypal) assertPaymentsConfigured();
+  if (!viaPaypal) {
+    assertWompiEnabled();
+    assertPaymentsConfigured();
+  }
   const cfg = getWompiConfig();
   const reference = `SC-${Date.now()}-${q.amountCOP}-${rand()}`;
   await getStore().insertDonation({
@@ -309,6 +322,7 @@ export interface SubscriptionResult {
 /** Alta del Plan Padrino: guarda la tarjeta (tokenizada por Wompi) y hace el primer cobro de inmediato. */
 export async function createSubscription(o: OrderInput, payment: { token: string; type?: 'CARD' | 'NEQUI' }): Promise<SubscriptionResult> {
   if (o.frequency !== 'monthly') throw new ValidationError('Frecuencia no válida para el Plan Padrino.');
+  assertWompiEnabled();
   assertPaymentsConfigured();
   const q = quoteOrThrow(o);
   if (q.currency !== 'COP') throw new ValidationError('Por ahora el Plan Padrino está disponible solo desde Colombia.');

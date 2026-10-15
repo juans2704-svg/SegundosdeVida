@@ -24,6 +24,8 @@ import { parseOrder, ValidationError } from '../src/server/validate';
 import { todayBogota, nextMonthOn, addDays } from '../src/server/dates';
 
 for (const k of ['WOMPI_PRIVATE_KEY', 'WOMPI_PUBLIC_KEY', 'PUBLIC_WOMPI_PUBLIC_KEY', 'DATABASE_URL']) delete process.env[k];
+// Los flujos de Wompi se prueban con Wompi encendido; abajo hay una prueba con Wompi apagado.
+process.env.PUBLIC_WOMPI_ENABLED = 'true';
 
 const order = (over: Record<string, unknown> = {}) =>
   parseOrder({
@@ -58,6 +60,18 @@ afterAll(async () => {
 
 it('sin llaves de Wompi, el servidor trabaja en modo simulado', () => {
   expect(getWompiConfig().mode).toBe('mock');
+});
+
+it('con Wompi apagado solo se recibe por PayPal', async () => {
+  setStore(createMemoryStore());
+  process.env.PUBLIC_WOMPI_ENABLED = 'false';
+  try {
+    await expect(createDonation(order())).rejects.toThrow(/PayPal/);
+    await expect(createSubscription(order({ frequency: 'monthly', pieceId: 'pintura' }), { token: 'tok_demo_approved' })).rejects.toThrow(/PayPal/);
+    await expect(createDonation(order({ region: 'intl', pieceId: 'ventana' }))).resolves.toMatchObject({ provider: 'paypal' });
+  } finally {
+    process.env.PUBLIC_WOMPI_ENABLED = 'true';
+  }
 });
 
 it('en producción sin llaves, la simulación y los pagos se bloquean', async () => {

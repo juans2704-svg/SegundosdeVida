@@ -8,7 +8,8 @@ Guía para poner en marcha los pagos reales de la SUPERCASA: Wompi (donación ú
 - **Vercel:** proyecto `supercasa` (equipo Spartanos), conectado al repositorio. Cada push publica.
 - **Conexión:** la integración Supabase ↔ Vercel crea `POSTGRES_URL` (solo Producción); el servidor la usa si no hay `DATABASE_URL`.
 - **Variables listas:** `POSTGRES_URL`, `PUBLIC_PAYMENTS_MODE=live`, `CRON_SECRET`.
-- **PayPal (exterior, USD):** enlace de pago `https://www.paypal.com/ncp/payment/ULLP6VT522LW6` en `src/config/payments.ts` (o `PUBLIC_PAYPAL_LINK`). El aporte queda *pendiente* y el admin lo confirma en `/admin` con "✓ Llegó a PayPal" al verlo en la cuenta de PayPal; solo entonces suma al recaudo. Para confirmación automática haría falta la API de PayPal (Client ID + Secret y webhooks).
+- **Solo PayPal por ahora:** Wompi está apagado (`PUBLIC_WOMPI_ENABLED` sin definir): no se muestra "Desde Colombia" ni el Plan Padrino, y el servidor rechaza pagos por Wompi. Para encenderlo: `PUBLIC_WOMPI_ENABLED=true` en Vercel + llaves de Wompi + volver a publicar.
+- **PayPal (USD):** enlace de pago `https://www.paypal.com/ncp/payment/ULLP6VT522LW6` en `src/config/payments.ts` (o `PUBLIC_PAYPAL_LINK`). El aporte queda *pendiente* y el admin lo confirma en `/admin` con "✓ Llegó a PayPal" al verlo en la cuenta de PayPal; solo entonces suma al recaudo. Para confirmación automática haría falta la API de PayPal (Client ID + Secret y webhooks).
 - **Faltan:** `ADMIN_PASSWORD`, `EDITOR_PASSWORD` (panel `/admin`) y las llaves de Wompi. Sin llaves, Producción muestra los pagos "en mantenimiento".
 - **Protección de Vercel:** activa en las direcciones `*.vercel.app`; el público no las ve hasta conectar el dominio propio o cambiar *Deployment Protection* a "Only Preview Deployments".
 

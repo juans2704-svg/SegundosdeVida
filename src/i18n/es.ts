@@ -9,6 +9,7 @@
  *
  * Para la versión en inglés: crear `en.ts` con la misma forma (tipo `Copy`).
  */
+import { payments } from '../config/payments';
 
 const es = {
   meta: {
@@ -127,6 +128,7 @@ const es = {
       monthlyPrice: '/ mes',
       monthlyNote: 'Puedes cancelarlo cuando quieras con el enlace que te llega por correo.',
       monthlyIntl: 'Por ahora el Plan Padrino está disponible solo desde Colombia.',
+      monthlySoon: 'El Plan Padrino mensual llega muy pronto 💛 Por ahora pon tu pieza con un aporte único.',
     },
     fields: {
       name: 'Tu nombre o apodo de héroe',
@@ -176,7 +178,7 @@ const es = {
     trust: [
       { icon: '🛡️', text: 'Fundación sin ánimo de lucro desde 2013' },
       { icon: '🧾', text: 'Certificado de donación (Régimen Tributario Especial)' },
-      { icon: '🔒', text: 'Pago seguro con Wompi y PayPal' },
+      { icon: '🔒', text: payments.wompiEnabled ? 'Pago seguro con Wompi y PayPal' : 'Pago seguro con PayPal' },
       { icon: '📊', text: 'Informe público de cada peso' },
     ],
     shareTitle: '¿Hoy no puedes poner una pieza?',

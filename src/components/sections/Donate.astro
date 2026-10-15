@@ -23,14 +23,15 @@ const d = t.donate;
     </div>
 
     <form class="flow card" data-donate novalidate>
-      <fieldset class="region">
+      <!-- Mientras Wompi está apagado, todos los aportes van por PayPal (en USD) -->
+      <fieldset class="region" hidden={!payments.wompiEnabled}>
         <legend>{d.region.legend}</legend>
         <label class="pill">
-          <input type="radio" name="region" value="co" checked />
+          <input type="radio" name="region" value="co" checked={payments.wompiEnabled} />
           <span>{d.region.co}</span>
         </label>
         <label class="pill">
-          <input type="radio" name="region" value="intl" />
+          <input type="radio" name="region" value="intl" checked={!payments.wompiEnabled} />
           <span>{d.region.intl}</span>
         </label>
       </fieldset>
@@ -60,7 +61,7 @@ const d = t.donate;
               <small>{d.frequency.monthlyHelp}</small>
             </span>
           </label>
-          <p class="monthly-intl" data-monthly-intl hidden>{d.frequency.monthlyIntl}</p>
+          <p class="monthly-intl" data-monthly-intl hidden>{payments.wompiEnabled ? d.frequency.monthlyIntl : d.frequency.monthlySoon}</p>
         </fieldset>
 
         <fieldset class="pieces">

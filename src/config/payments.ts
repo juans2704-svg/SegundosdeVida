@@ -16,6 +16,13 @@ const envMode = import.meta.env.PUBLIC_PAYMENTS_MODE as PaymentsMode | undefined
 export const payments = {
   mode: (envMode === 'live' ? 'live' : 'demo') as PaymentsMode,
 
+  /**
+   * Wompi (Colombia, COP y Plan Padrino). Apagado mientras la fundación termina
+   * su cuenta: todos los aportes van por PayPal. Para encenderlo, poner
+   * PUBLIC_WOMPI_ENABLED=true en Vercel y volver a publicar.
+   */
+  wompiEnabled: import.meta.env.PUBLIC_WOMPI_ENABLED === 'true',
+
   /** PENDIENTE: tasa de referencia para mostrar valores aproximados en USD. */
   usdRate: 4_000,
 
