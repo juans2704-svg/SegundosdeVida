@@ -277,8 +277,16 @@ function init(form: HTMLFormElement) {
       return r.status === 'pending' ? (await api.pollStatus(r.reference)).status : r.status;
     }
 
-    const checkout = await api.post<ServerCheckout & { provider: string; simulated: boolean }>('/api/donations', body);
+    const checkout = await api.post<ServerCheckout & { provider: string; simulated: boolean; paymentUrl?: string }>(
+      '/api/donations',
+      body,
+    );
     order.reference = checkout.reference;
+    if (checkout.provider === 'paypal' && checkout.paymentUrl) {
+      // PayPal se abre con un clic del donante (un enlace), así el navegador no lo bloquea.
+      q<HTMLAnchorElement>('[data-paypal-link]').href = checkout.paymentUrl;
+      return 'paypal';
+    }
     if (checkout.simulated) {
       const { status } = await demoProvider(provider).pay(order);
       if (status === 'cancelled' || status === 'error') return status;
@@ -296,7 +304,9 @@ function init(form: HTMLFormElement) {
 
     const msg = q('[data-result-msg]');
     const retry = q('[data-retry]');
-    retry.hidden = status === 'approved' || status === 'pending';
+    const paypalLink = q<HTMLAnchorElement>('[data-paypal-link]');
+    retry.hidden = status === 'approved' || status === 'pending' || status === 'paypal';
+    paypalLink.hidden = status !== 'paypal';
 
     const value = order.amount + order.fee;
     if (status === 'approved') {
@@ -317,11 +327,18 @@ function init(form: HTMLFormElement) {
       showThanks(order);
       return;
     }
+    if (status === 'paypal') {
+      msg.innerHTML = d.paypal(money(value, order.currency));
+      showStep('result');
+      return;
+    }
     if (status !== 'pending') track('payment_failed', { status, value, currency: order.currency });
     msg.textContent =
       serverMessage || (status === 'pending' ? d.pending : status === 'declined' || status === 'voided' ? d.declined : d.networkError);
     showStep('result');
   }
+
+  q('[data-paypal-link]').addEventListener('click', () => track('paypal_redirect'));
 
   /** El Plan Padrino está disponible solo desde Colombia (Wompi). */
   function applyRegion() {

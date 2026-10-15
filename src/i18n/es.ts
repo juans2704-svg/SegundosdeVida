@@ -168,6 +168,9 @@ const es = {
       'Se nos cayó la conexión, como los bloques de Calvito 😅 Recarga e inténtalo de nuevo.',
     approved: '¡Lo lograste, héroe! 🦸 Tu carnet te está esperando aquí abajo 👇',
     cancelled: 'Tranquilo, tu pieza sigue guardada. Cuando quieras, confirmamos con amor 💛',
+    paypal: (amount: string) =>
+      `¡Último paso! 🌎 Termina tu aporte de <strong>${amount}</strong> en PayPal (se abre en otra pestaña). Si PayPal te pide el monto, escribe ese valor. Apenas la fundación lo confirme, tu pieza aparecerá en la casa 💛`,
+    paypalCta: 'Ir a PayPal 💛',
     retry: 'Intentar otra vez',
     restart: 'Poner otra pieza',
     trust: [

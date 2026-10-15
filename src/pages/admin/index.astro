@@ -129,6 +129,7 @@ const modeLabel = { mock: 'Pruebas sin llaves (simulado)', sandbox: 'Wompi sandb
                     <td>{piece(d.pieceId)?.icon} {piece(d.pieceId)?.label ?? d.pieceId}</td>
                     <td class="num">
                       {formatCOP(d.amountCOP)}
+                      {d.currency !== 'COP' && <small>{money(d.chargeAmount, d.currency)} en PayPal</small>}
                       {d.fee > 0 && <small>+ {money(d.fee, d.currency)} comisión</small>}
                     </td>
                     <td>{d.frequency === 'monthly' ? 'Padrino' : 'Única'} · {d.source}</td>
@@ -137,7 +138,16 @@ const modeLabel = { mock: 'Pruebas sin llaves (simulado)', sandbox: 'Wompi sandb
                       <small>{d.donorEmail}</small>
                     </td>
                     <td>{d.certificate ? `${d.certificate.docType} ${d.certificate.docNumber}` : '—'}</td>
-                    <td><code>{d.reference}</code>{d.statusMessage && <small>{d.statusMessage}</small>}</td>
+                    <td>
+                      <code>{d.reference}</code>
+                      {d.statusMessage && <small>{d.statusMessage}</small>}
+                      {role === 'admin' && d.source === 'paypal' && d.status === 'pending' && (
+                        <span class="confirm">
+                          <button type="button" class="btn btn--primary" data-confirm={d.reference} data-approve="1">✓ Llegó a PayPal</button>
+                          <button type="button" class="btn btn--white" data-confirm={d.reference} data-approve="0">✗ No llegó</button>
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 ))
               }
@@ -193,6 +203,29 @@ const modeLabel = { mock: 'Pruebas sin llaves (simulado)', sandbox: 'Wompi sandb
             btn.textContent = '¡Copiado!';
           } catch {
             prompt('Enlace de cancelación', btn.dataset.copy);
+          }
+        }),
+      );
+      document.querySelectorAll<HTMLButtonElement>('[data-confirm]').forEach((btn) =>
+        btn.addEventListener('click', async () => {
+          const approve = btn.dataset.approve === '1';
+          const ok = confirm(
+            approve
+              ? '¿Confirmas que este aporte ya aparece en la cuenta de PayPal de la fundación? Sumará al recaudo.'
+              : '¿Descartar este aporte? Úsalo solo si el pago nunca llegó a PayPal.',
+          );
+          if (!ok) return;
+          btn.disabled = true;
+          const res = await fetch('/api/admin/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ reference: btn.dataset.confirm, approve }),
+          });
+          const out = await res.json().catch(() => ({}));
+          if (res.ok) location.reload();
+          else {
+            btn.disabled = false;
+            alert(out.error ?? 'No se pudo actualizar.');
           }
         }),
       );
@@ -252,6 +285,16 @@ const modeLabel = { mock: 'Pruebas sin llaves (simulado)', sandbox: 'Wompi sandb
   }
   .actions {
     margin: 0;
+  }
+  .confirm {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+  }
+  .confirm .btn {
+    padding: 0.3rem 0.7rem;
+    font-size: 0.85rem;
   }
   .block {
     padding: 1.2rem;

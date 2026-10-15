@@ -42,6 +42,12 @@ export const payments = {
   },
 
   paypal: {
+    /**
+     * Enlace de pago de PayPal de la fundación (donantes del exterior, USD).
+     * PayPal no avisa a la página: cada aporte queda "pendiente" y el admin lo
+     * confirma en /admin cuando el dinero llega a la cuenta de PayPal.
+     */
+    link: import.meta.env.PUBLIC_PAYPAL_LINK ?? 'https://www.paypal.com/ncp/payment/ULLP6VT522LW6',
     clientId: import.meta.env.PUBLIC_PAYPAL_CLIENT_ID ?? 'REEMPLAZAR',
     methods: 'PayPal o tarjeta internacional',
   },

@@ -28,6 +28,7 @@ import { quote } from '../lib/pricing';
 import { todayBogota, period, addDays, nextMonthOn } from './dates';
 import { ValidationError, type OrderInput } from './validate';
 import { pieces } from '../config/campaign';
+import { payments } from '../config/payments';
 
 /** Reintentos de un cobro mensual rechazado antes de pausar el plan. */
 export const MAX_FAILED_ATTEMPTS = 3;
@@ -61,6 +62,8 @@ export interface Checkout {
   publicKey: string;
   integrity: string | null;
   simulated: boolean;
+  /** PayPal: enlace de pago donde el donante termina el aporte. */
+  paymentUrl?: string;
 }
 
 function assertPaymentsConfigured() {
@@ -71,17 +74,19 @@ function assertPaymentsConfigured() {
 
 export async function createDonation(o: OrderInput): Promise<Checkout> {
   if (o.frequency !== 'once') throw new ValidationError('Para el Plan Padrino usa /api/subscriptions.');
-  assertPaymentsConfigured();
   const q = quoteOrThrow(o);
-  const cfg = getWompiConfig();
-  if (q.provider === 'paypal' && cfg.mode !== 'mock') {
+  const viaPaypal = q.provider === 'paypal';
+  if (viaPaypal && !payments.paypal.link) {
     throw Object.assign(new ValidationError('El pago desde el exterior estará disponible muy pronto. Escríbenos y te ayudamos 💛'), { status: 503 });
   }
+  // PayPal no depende de Wompi: funciona aunque Wompi aún no tenga llaves.
+  if (!viaPaypal) assertPaymentsConfigured();
+  const cfg = getWompiConfig();
   const reference = `SC-${Date.now()}-${q.amountCOP}-${rand()}`;
   await getStore().insertDonation({
     reference,
     status: 'pending',
-    source: cfg.mode === 'mock' ? 'demo' : q.provider,
+    source: viaPaypal ? 'paypal' : cfg.mode === 'mock' ? 'demo' : 'wompi',
     frequency: 'once',
     subscriptionId: null,
     pieceId: q.piece.id,
@@ -98,6 +103,18 @@ export async function createDonation(o: OrderInput): Promise<Checkout> {
     notes: null,
     createdBy: null,
   });
+  if (viaPaypal) {
+    return {
+      reference,
+      provider: 'paypal',
+      currency: q.currency,
+      amountInCents: q.totalInCents,
+      publicKey: '',
+      integrity: null,
+      simulated: false,
+      paymentUrl: payments.paypal.link,
+    };
+  }
   return {
     reference,
     provider: q.provider,
@@ -107,6 +124,25 @@ export async function createDonation(o: OrderInput): Promise<Checkout> {
     integrity: q.currency === 'COP' ? integritySignature(reference, q.totalInCents, 'COP', cfg.integritySecret) : null,
     simulated: cfg.mode === 'mock',
   };
+}
+
+/**
+ * Aportes por PayPal: el admin confirma (o descarta) el aporte cuando lo ve en
+ * su cuenta de PayPal. Solo cambia aportes de PayPal que siguen pendientes.
+ */
+export async function confirmPaypalDonation(reference: string, approve: boolean, admin: string) {
+  const store = getStore();
+  const d = await store.getDonation(reference);
+  if (!d || d.source !== 'paypal') throw Object.assign(new ValidationError('Aporte de PayPal no encontrado.'), { status: 404 });
+  const updated = await store.transitionDonation(
+    reference,
+    ['pending'],
+    approve
+      ? { status: 'approved', approvedAt: new Date().toISOString(), statusMessage: `Confirmado en PayPal por ${admin}` }
+      : { status: 'voided', statusMessage: `Descartado por ${admin}: no llegó a PayPal` },
+  );
+  if (!updated) throw Object.assign(new ValidationError('Este aporte ya no está pendiente.'), { status: 409 });
+  return updated;
 }
 
 // ---------------------------------------------------------------------------

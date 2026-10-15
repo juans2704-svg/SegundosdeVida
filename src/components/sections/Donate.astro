@@ -234,6 +234,7 @@ const d = t.donate;
         </div>
         <div>
           <p class="result__msg" data-result-msg aria-live="assertive"></p>
+          <p class="result__paypal"><a class="btn btn--primary btn--xl" data-paypal-link target="_blank" rel="noopener" hidden>{d.paypalCta}</a></p>
           <div class="actions">
             <button type="button" class="btn btn--primary" data-retry hidden>{d.retry}</button>
             <button type="button" class="btn btn--white" data-restart>{d.restart}</button>
@@ -676,6 +677,12 @@ const d = t.donate;
   .result__msg {
     font-size: 1.3rem;
     font-weight: 700;
+  }
+  .result__paypal {
+    margin: 0 0 1rem;
+  }
+  .result__paypal:has([hidden]) {
+    display: none;
   }
   .field--row {
     display: grid;

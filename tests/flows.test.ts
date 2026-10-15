@@ -15,6 +15,7 @@ import {
   chargeDueSubscriptions,
   cancelSubscription,
   recordManualDonation,
+  confirmPaypalDonation,
   donationStatus,
   MAX_FAILED_ATTEMPTS,
 } from '../src/server/donations';
@@ -65,6 +66,8 @@ it('en producción sin llaves, la simulación y los pagos se bloquean', async ()
   try {
     await expect(createDonation(order())).rejects.toThrow(/mantenimiento/);
     await expect(simulateResult('SC-x', 'APPROVED')).rejects.toThrow(/desactivada/);
+    // PayPal no depende de Wompi: sigue disponible
+    await expect(createDonation(order({ region: 'intl', pieceId: 'libre', custom: 25 }))).resolves.toMatchObject({ provider: 'paypal' });
   } finally {
     delete process.env.VERCEL_ENV;
   }
@@ -143,6 +146,23 @@ for (const [name, reset] of backends) {
         await simulateResult(c.reference, 'APPROVED');
       }
       expect(await getStore().progress()).toEqual({ raisedCOP: 300000, heroes: 2 });
+    });
+
+    it('PayPal: queda pendiente hasta que el admin confirma; solo se confirma una vez', async () => {
+      const c = await createDonation(order({ region: 'intl', pieceId: 'libre', custom: 25, coverFee: false }));
+      expect(c).toMatchObject({ provider: 'paypal', currency: 'USD', simulated: false });
+      expect(c.paymentUrl).toMatch(/^https:\/\/www\.paypal\.com\//);
+      expect((await getStore().progress()).raisedCOP).toBe(0);
+      const d = await confirmPaypalDonation(c.reference, true, 'admin');
+      expect(d.status).toBe('approved');
+      expect((await getStore().progress()).raisedCOP).toBe(d.amountCOP);
+      await expect(confirmPaypalDonation(c.reference, false, 'admin')).rejects.toThrow(/pendiente/);
+      // descartar uno que nunca llegó
+      const c2 = await createDonation(order({ region: 'intl', pieceId: 'libre', custom: 10, coverFee: false }));
+      expect((await confirmPaypalDonation(c2.reference, false, 'admin')).status).toBe('voided');
+      // no sirve para aportes de Wompi
+      const w = await createDonation(order());
+      await expect(confirmPaypalDonation(w.reference, true, 'admin')).rejects.toThrow(/PayPal/);
     });
 
     it('aporte manual (transferencia) suma de inmediato', async () => {
