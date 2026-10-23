@@ -1,5 +1,5 @@
 export type DonationStatus = 'pending' | 'approved' | 'declined' | 'voided' | 'error';
-export type DonationSource = 'wompi' | 'paypal' | 'manual' | 'demo';
+export type DonationSource = 'wompi' | 'paypal' | 'transfer' | 'manual' | 'demo';
 export type Frequency = 'once' | 'monthly';
 export type SubscriptionStatus = 'pending' | 'active' | 'past_due' | 'cancelled' | 'failed';
 

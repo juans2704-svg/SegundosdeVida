@@ -173,12 +173,42 @@ const es = {
     paypal: (amount: string) =>
       `¡Último paso! 🌎 Termina tu aporte de <strong>${amount}</strong> en PayPal (se abre en otra pestaña). Si PayPal te pide el monto, escribe ese valor. Apenas la fundación lo confirme, tu pieza aparecerá en la casa 💛`,
     paypalCta: 'Ir a PayPal 💛',
+    transfer: {
+      label: 'Transferencia bancaria',
+      methods: 'Bancolombia · Cuenta de ahorros de la fundación (sin comisiones)',
+      cta: '🏦 Ver datos para transferir',
+      secure: '🔒 Transfieres directo a la cuenta de la fundación. Nunca te pedimos claves ni datos de tu tarjeta.',
+      title: (amount: string) =>
+        `¡Último paso! 🏦 Transfiere <strong>${amount}</strong> a la cuenta de la fundación. Apenas la confirmemos, tu pieza aparecerá en la casa 💛`,
+      rows: {
+        bank: 'Banco',
+        type: 'Tipo',
+        number: 'Número',
+        holder: 'Titular',
+        nit: 'NIT',
+        amount: 'Valor',
+        reference: 'Referencia',
+      },
+      refHelp: '✍️ Escribe la referencia en la descripción de la transferencia o consignación: así sabemos que la pieza es tuya.',
+      receipt: (email: string) =>
+        `📩 ¿Ya transferiste? Envía el comprobante con tu referencia a <a href="mailto:${email}">${email}</a> y te avisamos cuando tu pieza esté puesta.`,
+      copy: 'Copiar',
+      copied: '¡Copiado!',
+    },
     retry: 'Intentar otra vez',
     restart: 'Poner otra pieza',
     trust: [
       { icon: '🛡️', text: 'Fundación sin ánimo de lucro desde 2013' },
       { icon: '🧾', text: 'Certificado de donación (Régimen Tributario Especial)' },
-      { icon: '🔒', text: payments.wompiEnabled ? 'Pago seguro con Wompi y PayPal' : 'Pago seguro con PayPal' },
+      {
+        icon: '🔒',
+        text:
+          payments.channel === 'transfer'
+            ? 'Transferencia directa a la cuenta Bancolombia de la fundación'
+            : payments.wompiEnabled
+              ? 'Pago seguro con Wompi y PayPal'
+              : 'Pago seguro con PayPal',
+      },
       { icon: '📊', text: 'Informe público de cada peso' },
     ],
     shareTitle: '¿Hoy no puedes poner una pieza?',

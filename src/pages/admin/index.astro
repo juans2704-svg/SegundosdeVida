@@ -141,9 +141,11 @@ const modeLabel = { mock: 'Pruebas sin llaves (simulado)', sandbox: 'Wompi sandb
                     <td>
                       <code>{d.reference}</code>
                       {d.statusMessage && <small>{d.statusMessage}</small>}
-                      {role === 'admin' && d.source === 'paypal' && d.status === 'pending' && (
+                      {role === 'admin' && (d.source === 'paypal' || d.source === 'transfer') && d.status === 'pending' && (
                         <span class="confirm">
-                          <button type="button" class="btn btn--primary" data-confirm={d.reference} data-approve="1">✓ Llegó a PayPal</button>
+                          <button type="button" class="btn btn--primary" data-confirm={d.reference} data-approve="1">
+                            {d.source === 'paypal' ? '✓ Llegó a PayPal' : '✓ Llegó la transferencia'}
+                          </button>
                           <button type="button" class="btn btn--white" data-confirm={d.reference} data-approve="0">✗ No llegó</button>
                         </span>
                       )}
@@ -211,8 +213,8 @@ const modeLabel = { mock: 'Pruebas sin llaves (simulado)', sandbox: 'Wompi sandb
           const approve = btn.dataset.approve === '1';
           const ok = confirm(
             approve
-              ? '¿Confirmas que este aporte ya aparece en la cuenta de PayPal de la fundación? Sumará al recaudo.'
-              : '¿Descartar este aporte? Úsalo solo si el pago nunca llegó a PayPal.',
+              ? '¿Confirmas que este aporte ya aparece en la cuenta de la fundación (Bancolombia o PayPal)? Sumará al recaudo.'
+              : '¿Descartar este aporte? Úsalo solo si el dinero nunca llegó.',
           );
           if (!ok) return;
           btn.disabled = true;

@@ -205,6 +205,13 @@ export const foundation = {
   phone: '316 524 6087',
   /** PENDIENTE: WhatsApp de la campaña, solo números con indicativo (ej. '573001234567'). */
   whatsapp: '',
+  /** Cuenta donde se recibe todo el recaudo (certificación Bancolombia del 21 de octubre de 2026). */
+  bank: {
+    name: 'Bancolombia',
+    type: 'Cuenta de ahorros',
+    number: '186-000090-54',
+    holder: 'Fundación Segundos de Vida',
+  },
   /** La fundación emite certificado de donación a personas naturales y jurídicas. */
   issuesCertificates: true,
   social: [

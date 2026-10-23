@@ -15,7 +15,7 @@ import {
   chargeDueSubscriptions,
   cancelSubscription,
   recordManualDonation,
-  confirmPaypalDonation,
+  confirmPendingDonation,
   donationStatus,
   MAX_FAILED_ATTEMPTS,
 } from '../src/server/donations';
@@ -26,6 +26,7 @@ import { todayBogota, nextMonthOn, addDays } from '../src/server/dates';
 for (const k of ['WOMPI_PRIVATE_KEY', 'WOMPI_PUBLIC_KEY', 'PUBLIC_WOMPI_PUBLIC_KEY', 'DATABASE_URL']) delete process.env[k];
 // Los flujos de Wompi se prueban con Wompi encendido; abajo hay una prueba con Wompi apagado.
 process.env.PUBLIC_WOMPI_ENABLED = 'true';
+process.env.PUBLIC_PAYMENT_CHANNEL = 'online';
 
 const order = (over: Record<string, unknown> = {}) =>
   parseOrder({
@@ -60,6 +61,25 @@ afterAll(async () => {
 
 it('sin llaves de Wompi, el servidor trabaja en modo simulado', () => {
   expect(getWompiConfig().mode).toBe('mock');
+});
+
+it('por transferencia: código corto, sin comisión, pendiente hasta que el admin confirma', async () => {
+  setStore(createMemoryStore());
+  process.env.PUBLIC_PAYMENT_CHANNEL = 'transfer';
+  try {
+    // aunque el navegador mande otra región o pida cubrir la comisión, la transferencia es en COP y sin comisión
+    const c = await createDonation(order({ region: 'intl', coverFee: true }));
+    expect(c).toMatchObject({ provider: 'transfer', currency: 'COP', simulated: false });
+    expect(c.reference).toMatch(/^SC-[A-HJ-NP-Z2-9]{6}$/);
+    const d = await getStore().getDonation(c.reference);
+    expect(d).toMatchObject({ status: 'pending', source: 'transfer', fee: 0, amountCOP: 100_000, chargeAmount: 100_000 });
+    expect((await getStore().progress()).raisedCOP).toBe(0);
+    await confirmPendingDonation(c.reference, true, 'admin');
+    expect((await getStore().progress()).raisedCOP).toBe(100_000);
+    await expect(createSubscription(order({ frequency: 'monthly', pieceId: 'pintura' }), { token: 'x' })).rejects.toThrow(/muy pronto/);
+  } finally {
+    process.env.PUBLIC_PAYMENT_CHANNEL = 'online';
+  }
 });
 
 it('con Wompi apagado solo se recibe por PayPal', async () => {
@@ -167,16 +187,16 @@ for (const [name, reset] of backends) {
       expect(c).toMatchObject({ provider: 'paypal', currency: 'USD', simulated: false });
       expect(c.paymentUrl).toMatch(/^https:\/\/www\.paypal\.com\//);
       expect((await getStore().progress()).raisedCOP).toBe(0);
-      const d = await confirmPaypalDonation(c.reference, true, 'admin');
+      const d = await confirmPendingDonation(c.reference, true, 'admin');
       expect(d.status).toBe('approved');
       expect((await getStore().progress()).raisedCOP).toBe(d.amountCOP);
-      await expect(confirmPaypalDonation(c.reference, false, 'admin')).rejects.toThrow(/pendiente/);
+      await expect(confirmPendingDonation(c.reference, false, 'admin')).rejects.toThrow(/pendiente/);
       // descartar uno que nunca llegó
       const c2 = await createDonation(order({ region: 'intl', pieceId: 'libre', custom: 10, coverFee: false }));
-      expect((await confirmPaypalDonation(c2.reference, false, 'admin')).status).toBe('voided');
+      expect((await confirmPendingDonation(c2.reference, false, 'admin')).status).toBe('voided');
       // no sirve para aportes de Wompi
       const w = await createDonation(order());
-      await expect(confirmPaypalDonation(w.reference, true, 'admin')).rejects.toThrow(/PayPal/);
+      await expect(confirmPendingDonation(w.reference, true, 'admin')).rejects.toThrow(/PayPal/);
     });
 
     it('aporte manual (transferencia) suma de inmediato', async () => {

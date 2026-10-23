@@ -7,6 +7,10 @@ import { formatCOP, formatUSD, copToUSD } from '../../lib/format';
 import t from '../../i18n/es';
 
 const d = t.donate;
+/** Por ahora los aportes llegan por transferencia a la cuenta Bancolombia (sin pasarela). */
+const transfer = payments.channel === 'transfer';
+const onlyCOP = transfer || payments.wompiEnabled;
+const bank = foundation.bank;
 ---
 
 <section class="section donate" id="donar" aria-labelledby="donate-title">
@@ -24,14 +28,14 @@ const d = t.donate;
 
     <form class="flow card" data-donate novalidate>
       <!-- Mientras Wompi está apagado, todos los aportes van por PayPal (en USD) -->
-      <fieldset class="region" hidden={!payments.wompiEnabled}>
+      <fieldset class="region" hidden={transfer || !payments.wompiEnabled}>
         <legend>{d.region.legend}</legend>
         <label class="pill">
-          <input type="radio" name="region" value="co" checked={payments.wompiEnabled} />
+          <input type="radio" name="region" value="co" checked={onlyCOP} />
           <span>{d.region.co}</span>
         </label>
         <label class="pill">
-          <input type="radio" name="region" value="intl" checked={!payments.wompiEnabled} />
+          <input type="radio" name="region" value="intl" checked={!onlyCOP} />
           <span>{d.region.intl}</span>
         </label>
       </fieldset>
@@ -61,7 +65,7 @@ const d = t.donate;
               <small>{d.frequency.monthlyHelp}</small>
             </span>
           </label>
-          <p class="monthly-intl" data-monthly-intl hidden>{payments.wompiEnabled ? d.frequency.monthlyIntl : d.frequency.monthlySoon}</p>
+          <p class="monthly-intl" data-monthly-intl hidden>{payments.wompiEnabled && !transfer ? d.frequency.monthlyIntl : d.frequency.monthlySoon}</p>
         </fieldset>
 
         <fieldset class="pieces">
@@ -210,8 +214,8 @@ const d = t.donate;
           <p class="summary__piece" data-summary-piece></p>
           <p class="summary__amount" data-summary-amount></p>
           <ul class="impact" data-impact></ul>
-          <label class="check check--fee">
-            <input type="checkbox" name="coverFee" checked />
+          <label class="check check--fee" hidden={transfer}>
+            <input type="checkbox" name="coverFee" checked={!transfer} />
             <span data-fee-text></span>
           </label>
           <p class="summary__total">{d.confirm.total}: <strong data-summary-total></strong></p>
@@ -223,9 +227,9 @@ const d = t.donate;
 
         <div class="actions">
           <button type="button" class="btn btn--ghost" data-prev="2">{d.confirm.back}</button>
-          <button type="submit" class="btn btn--primary btn--xl" data-confirm>{d.confirm.cta}</button>
+          <button type="submit" class="btn btn--primary btn--xl" data-confirm>{transfer ? d.transfer.cta : d.confirm.cta}</button>
         </div>
-        <p class="secure">{d.confirm.secure}</p>
+        <p class="secure">{transfer ? d.transfer.secure : d.confirm.secure}</p>
       </div>
 
       <!-- Resultado: pendiente / rechazado / error -->
@@ -235,6 +239,28 @@ const d = t.donate;
         </div>
         <div>
           <p class="result__msg" data-result-msg aria-live="assertive"></p>
+          <div class="bank" data-bank hidden>
+            <dl>
+              <div><dt>{d.transfer.rows.bank}</dt><dd>{bank.name}</dd></div>
+              <div><dt>{d.transfer.rows.type}</dt><dd>{bank.type}</dd></div>
+              <div>
+                <dt>{d.transfer.rows.number}</dt>
+                <dd><strong>{bank.number}</strong> <button type="button" class="copy" data-copy={bank.number.replace(/\D/g, '')}>{d.transfer.copy}</button></dd>
+              </div>
+              <div><dt>{d.transfer.rows.holder}</dt><dd>{bank.holder}</dd></div>
+              <div><dt>{d.transfer.rows.nit}</dt><dd>{foundation.nit}</dd></div>
+              <div class="bank__hl">
+                <dt>{d.transfer.rows.amount}</dt>
+                <dd><strong data-bank-amount></strong> <button type="button" class="copy" data-copy-amount>{d.transfer.copy}</button></dd>
+              </div>
+              <div class="bank__hl">
+                <dt>{d.transfer.rows.reference}</dt>
+                <dd><strong data-bank-ref></strong> <button type="button" class="copy" data-copy-ref>{d.transfer.copy}</button></dd>
+              </div>
+            </dl>
+            <p class="bank__help">{d.transfer.refHelp}</p>
+            <p class="bank__help" set:html={d.transfer.receipt(foundation.treasuryEmail)} />
+          </div>
           <p class="result__paypal"><a class="btn btn--primary btn--xl" data-paypal-link target="_blank" rel="noopener" hidden>{d.paypalCta}</a></p>
           <div class="actions">
             <button type="button" class="btn btn--primary" data-retry hidden>{d.retry}</button>
@@ -678,6 +704,57 @@ const d = t.donate;
   .result__msg {
     font-size: 1.3rem;
     font-weight: 700;
+  }
+  .bank {
+    margin: 0 0 1rem;
+    padding: 1rem 1.1rem;
+    background: var(--cream);
+    border: 2.5px solid var(--ink);
+    border-radius: 14px;
+  }
+  .bank dl {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0;
+  }
+  .bank dl > div {
+    display: grid;
+    grid-template-columns: minmax(7.5rem, auto) 1fr;
+    gap: 0.6rem;
+    align-items: baseline;
+  }
+  .bank dt {
+    font-weight: 700;
+    color: var(--ink-soft);
+  }
+  .bank dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .bank__hl dd strong {
+    font-size: 1.15rem;
+    color: var(--red-text);
+  }
+  .bank__help {
+    margin: 0.7rem 0 0;
+    font-size: 0.95rem;
+  }
+  .copy {
+    margin-left: 0.3rem;
+    padding: 0.1rem 0.6rem;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: #fff;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  @media (max-width: 420px) {
+    .bank dl > div {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
   }
   .result__paypal {
     margin: 0 0 1rem;

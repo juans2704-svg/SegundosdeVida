@@ -3,7 +3,7 @@
  * A pieza → B frecuencia y datos → D impacto + "Confirmar con amor" → C checkout → resultado.
  */
 import { pieces, type Piece } from '../config/campaign';
-import { regions, type Region } from '../config/payments';
+import { payments, regions, type Region } from '../config/payments';
 import { quote } from '../lib/pricing';
 import { formatCOP, formatMoney, formatUSD, formatUSDCents, copToUSD, feeCover } from '../lib/format';
 import { buildReference, providerFor, type DonationOrder, type Frequency } from '../lib/payments';
@@ -17,6 +17,9 @@ import t from '../i18n/es';
 
 const d = t.donate;
 const form = document.querySelector<HTMLFormElement>('[data-donate]');
+
+/** Por ahora los aportes llegan por transferencia a la cuenta Bancolombia (sin pasarela). */
+const TRANSFER = payments.channel === 'transfer';
 
 if (form) init(form);
 initShareSite();
@@ -176,7 +179,7 @@ function init(form: HTMLFormElement) {
         return li;
       }),
     );
-    const provider = providerFor(region());
+    const provider = TRANSFER ? d.transfer : providerFor(region());
     q('[data-summary-provider]').textContent = provider.label;
     q('[data-summary-methods]').textContent = provider.methods;
     updateTotal();
@@ -239,7 +242,11 @@ function init(form: HTMLFormElement) {
 
     try {
       const server = await api.firstProgress();
-      const status = server ? await payWithServer(order, server.payments) : (await providerFor(region()).pay(order)).status;
+      const status = server
+        ? await payWithServer(order, server.payments)
+        : TRANSFER
+          ? 'transfer'
+          : (await providerFor(region()).pay(order)).status;
       handleResult(status, order, Boolean(server));
     } catch (err) {
       handleResult('error', order, true, err instanceof api.ApiError ? err.message : '');
@@ -282,6 +289,7 @@ function init(form: HTMLFormElement) {
       body,
     );
     order.reference = checkout.reference;
+    if (checkout.provider === 'transfer') return 'transfer';
     if (checkout.provider === 'paypal' && checkout.paymentUrl) {
       // PayPal se abre con un clic del donante (un enlace), así el navegador no lo bloquea.
       q<HTMLAnchorElement>('[data-paypal-link]').href = checkout.paymentUrl;
@@ -305,8 +313,9 @@ function init(form: HTMLFormElement) {
     const msg = q('[data-result-msg]');
     const retry = q('[data-retry]');
     const paypalLink = q<HTMLAnchorElement>('[data-paypal-link]');
-    retry.hidden = status === 'approved' || status === 'pending' || status === 'paypal';
+    retry.hidden = ['approved', 'pending', 'paypal', 'transfer'].includes(status);
     paypalLink.hidden = status !== 'paypal';
+    q('[data-bank]').hidden = status !== 'transfer';
 
     const value = order.amount + order.fee;
     if (status === 'approved') {
@@ -327,6 +336,17 @@ function init(form: HTMLFormElement) {
       showThanks(order);
       return;
     }
+    if (status === 'transfer') {
+      const amount = formatCOP(order.amountCOP);
+      msg.innerHTML = d.transfer.title(amount);
+      q('[data-bank-amount]').textContent = amount;
+      q('[data-copy-amount]').dataset.copy = String(order.amountCOP);
+      q('[data-bank-ref]').textContent = order.reference;
+      q('[data-copy-ref]').dataset.copy = order.reference;
+      track('transfer_details', { value: order.amountCOP, currency: 'COP', piece: order.pieceId });
+      showStep('result');
+      return;
+    }
     if (status === 'paypal') {
       msg.innerHTML = d.paypal(money(value, order.currency));
       showStep('result');
@@ -340,9 +360,25 @@ function init(form: HTMLFormElement) {
 
   q('[data-paypal-link]').addEventListener('click', () => track('paypal_redirect'));
 
+  form.querySelectorAll<HTMLButtonElement>('.copy').forEach((btn) =>
+    btn.addEventListener('click', async () => {
+      const text = btn.dataset.copy ?? '';
+      try {
+        await navigator.clipboard.writeText(text);
+      } catch {
+        window.prompt(d.transfer.copy, text);
+        return;
+      }
+      const label = btn.textContent;
+      btn.textContent = d.transfer.copied;
+      setTimeout(() => (btn.textContent = label), 1600);
+    }),
+  );
+
   /** El Plan Padrino está disponible solo desde Colombia (Wompi). */
   function applyRegion() {
-    const intl = region() === 'intl';
+    // Sin pasarela (transferencia) tampoco hay Plan Padrino: se cobra con Wompi.
+    const intl = region() === 'intl' || TRANSFER;
     const monthlyInput = form.querySelector<HTMLInputElement>('input[name=frequency][value=monthly]')!;
     monthlyInput.disabled = intl;
     monthlyInput.closest('label')?.classList.toggle('is-disabled', intl);

@@ -13,8 +13,18 @@ export type Region = 'co' | 'intl';
 
 const envMode = import.meta.env.PUBLIC_PAYMENTS_MODE as PaymentsMode | undefined;
 
+export type PaymentChannel = 'transfer' | 'online';
+
 export const payments = {
   mode: (envMode === 'live' ? 'live' : 'demo') as PaymentsMode,
+
+  /**
+   * Cómo se recibe el aporte:
+   * - `transfer` (por ahora): la página muestra los datos de la cuenta Bancolombia;
+   *   el aporte queda pendiente y el admin lo confirma en /admin al ver la transferencia.
+   * - `online`: pasarelas (Wompi y/o PayPal). Se activa con PUBLIC_PAYMENT_CHANNEL=online.
+   */
+  channel: (import.meta.env.PUBLIC_PAYMENT_CHANNEL === 'online' ? 'online' : 'transfer') as PaymentChannel,
 
   /**
    * Wompi (Colombia, COP y Plan Padrino). Apagado mientras la fundación termina
