@@ -3,7 +3,7 @@
  * A pieza → B frecuencia y datos → D impacto + "Confirmar con amor" → C checkout → resultado.
  */
 import { pieces, type Piece } from '../config/campaign';
-import { payments, regions, type Region } from '../config/payments';
+import { payments, regions, wompiLinkFor, type Region } from '../config/payments';
 import { quote } from '../lib/pricing';
 import { formatCOP, formatMoney, formatUSD, formatUSDCents, copToUSD, feeCover } from '../lib/format';
 import { buildReference, providerFor, type DonationOrder, type Frequency } from '../lib/payments';
@@ -20,6 +20,10 @@ const form = document.querySelector<HTMLFormElement>('[data-donate]');
 
 /** Por ahora los aportes llegan por transferencia a la cuenta Bancolombia (sin pasarela). */
 const TRANSFER = payments.channel === 'transfer';
+/** Enlaces de pago de Wompi (sin integración de API): por defecto mientras tanto. */
+const LINKS = payments.channel === 'links';
+/** Sin integración de API: todo en COP, sin comisión ni Plan Padrino. */
+const OFFLINE = TRANSFER || LINKS;
 
 if (form) init(form);
 initShareSite();
@@ -179,7 +183,7 @@ function init(form: HTMLFormElement) {
         return li;
       }),
     );
-    const provider = TRANSFER ? d.transfer : providerFor(region());
+    const provider = LINKS ? d.links : TRANSFER ? d.transfer : providerFor(region());
     q('[data-summary-provider]').textContent = provider.label;
     q('[data-summary-methods]').textContent = provider.methods;
     updateTotal();
@@ -244,9 +248,11 @@ function init(form: HTMLFormElement) {
       const server = await api.firstProgress();
       const status = server
         ? await payWithServer(order, server.payments)
-        : TRANSFER
-          ? 'transfer'
-          : (await providerFor(region()).pay(order)).status;
+        : LINKS
+          ? openWompiLink(wompiLinkFor(order.amountCOP))
+          : TRANSFER
+            ? 'transfer'
+            : (await providerFor(region()).pay(order)).status;
       handleResult(status, order, Boolean(server));
     } catch (err) {
       handleResult('error', order, true, err instanceof api.ApiError ? err.message : '');
@@ -254,6 +260,12 @@ function init(form: HTMLFormElement) {
       submitting = false;
       btn.disabled = false;
     }
+  }
+
+  /** Prepara el botón hacia el enlace de Wompi (se abre con un clic del donante, así no lo bloquea el navegador). */
+  function openWompiLink(link: { url: string; exact: boolean }) {
+    q<HTMLAnchorElement>('[data-wompi-link]').href = link.url;
+    return link.exact ? 'wompi-exact' : 'wompi-open';
   }
 
   /** Flujo con servidor: el servidor calcula el monto, firma el pago y confirma el resultado con Wompi. */
@@ -284,12 +296,15 @@ function init(form: HTMLFormElement) {
       return r.status === 'pending' ? (await api.pollStatus(r.reference)).status : r.status;
     }
 
-    const checkout = await api.post<ServerCheckout & { provider: string; simulated: boolean; paymentUrl?: string }>(
+    const checkout = await api.post<ServerCheckout & { provider: string; simulated: boolean; paymentUrl?: string; exact?: boolean }>(
       '/api/donations',
       body,
     );
     order.reference = checkout.reference;
     if (checkout.provider === 'transfer') return 'transfer';
+    if (checkout.provider === 'wompi-link' && checkout.paymentUrl) {
+      return openWompiLink({ url: checkout.paymentUrl, exact: Boolean(checkout.exact) });
+    }
     if (checkout.provider === 'paypal' && checkout.paymentUrl) {
       // PayPal se abre con un clic del donante (un enlace), así el navegador no lo bloquea.
       q<HTMLAnchorElement>('[data-paypal-link]').href = checkout.paymentUrl;
@@ -313,9 +328,19 @@ function init(form: HTMLFormElement) {
     const msg = q('[data-result-msg]');
     const retry = q('[data-retry]');
     const paypalLink = q<HTMLAnchorElement>('[data-paypal-link]');
-    retry.hidden = ['approved', 'pending', 'paypal', 'transfer'].includes(status);
+    retry.hidden = ['approved', 'pending', 'paypal', 'transfer', 'wompi-exact', 'wompi-open'].includes(status);
     paypalLink.hidden = status !== 'paypal';
+    const viaWompi = status === 'wompi-exact' || status === 'wompi-open';
     q('[data-bank]').hidden = status !== 'transfer';
+    q('[data-wompi-link]').hidden = !viaWompi;
+    q('[data-bank-toggle-wrap]').hidden = !viaWompi;
+    if (viaWompi || status === 'transfer') {
+      const amount = formatCOP(order.amountCOP);
+      q('[data-bank-amount]').textContent = amount;
+      q('[data-copy-amount]').dataset.copy = String(order.amountCOP);
+      q('[data-bank-ref]').textContent = order.reference;
+      q('[data-copy-ref]').dataset.copy = order.reference;
+    }
 
     const value = order.amount + order.fee;
     if (status === 'approved') {
@@ -337,13 +362,14 @@ function init(form: HTMLFormElement) {
       return;
     }
     if (status === 'transfer') {
-      const amount = formatCOP(order.amountCOP);
-      msg.innerHTML = d.transfer.title(amount);
-      q('[data-bank-amount]').textContent = amount;
-      q('[data-copy-amount]').dataset.copy = String(order.amountCOP);
-      q('[data-bank-ref]').textContent = order.reference;
-      q('[data-copy-ref]').dataset.copy = order.reference;
+      msg.innerHTML = d.transfer.title(formatCOP(order.amountCOP));
       track('transfer_details', { value: order.amountCOP, currency: 'COP', piece: order.pieceId });
+      showStep('result');
+      return;
+    }
+    if (status === 'wompi-exact' || status === 'wompi-open') {
+      const amount = formatCOP(order.amountCOP);
+      msg.innerHTML = status === 'wompi-exact' ? d.links.exact(amount) : d.links.open(amount);
       showStep('result');
       return;
     }
@@ -359,6 +385,12 @@ function init(form: HTMLFormElement) {
   }
 
   q('[data-paypal-link]').addEventListener('click', () => track('paypal_redirect'));
+  q('[data-wompi-link]').addEventListener('click', () => track('wompi_link_redirect'));
+  q('[data-bank-toggle]').addEventListener('click', () => {
+    q('[data-bank]').hidden = false;
+    q('[data-bank-toggle-wrap]').hidden = true;
+    track('transfer_details');
+  });
 
   form.querySelectorAll<HTMLButtonElement>('.copy').forEach((btn) =>
     btn.addEventListener('click', async () => {
@@ -378,7 +410,7 @@ function init(form: HTMLFormElement) {
   /** El Plan Padrino está disponible solo desde Colombia (Wompi). */
   function applyRegion() {
     // Sin pasarela (transferencia) tampoco hay Plan Padrino: se cobra con Wompi.
-    const intl = region() === 'intl' || TRANSFER;
+    const intl = region() === 'intl' || OFFLINE;
     const monthlyInput = form.querySelector<HTMLInputElement>('input[name=frequency][value=monthly]')!;
     monthlyInput.disabled = intl;
     monthlyInput.closest('label')?.classList.toggle('is-disabled', intl);

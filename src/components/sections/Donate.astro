@@ -7,9 +7,13 @@ import { formatCOP, formatUSD, copToUSD } from '../../lib/format';
 import t from '../../i18n/es';
 
 const d = t.donate;
-/** Por ahora los aportes llegan por transferencia a la cuenta Bancolombia (sin pasarela). */
+/** Sin integración de API (enlaces de Wompi o transferencia): todo en COP, sin comisión ni Plan Padrino. */
+const links = payments.channel === 'links';
 const transfer = payments.channel === 'transfer';
-const onlyCOP = transfer || payments.wompiEnabled;
+const offline = links || transfer;
+const onlyCOP = offline || payments.wompiEnabled;
+const ctaText = links ? d.links.cta : transfer ? d.transfer.cta : d.confirm.cta;
+const secureText = links ? d.links.secure : transfer ? d.transfer.secure : d.confirm.secure;
 const bank = foundation.bank;
 ---
 
@@ -28,7 +32,7 @@ const bank = foundation.bank;
 
     <form class="flow card" data-donate novalidate>
       <!-- Mientras Wompi está apagado, todos los aportes van por PayPal (en USD) -->
-      <fieldset class="region" hidden={transfer || !payments.wompiEnabled}>
+      <fieldset class="region" hidden={offline || !payments.wompiEnabled}>
         <legend>{d.region.legend}</legend>
         <label class="pill">
           <input type="radio" name="region" value="co" checked={onlyCOP} />
@@ -65,7 +69,7 @@ const bank = foundation.bank;
               <small>{d.frequency.monthlyHelp}</small>
             </span>
           </label>
-          <p class="monthly-intl" data-monthly-intl hidden>{payments.wompiEnabled && !transfer ? d.frequency.monthlyIntl : d.frequency.monthlySoon}</p>
+          <p class="monthly-intl" data-monthly-intl hidden>{payments.wompiEnabled && !offline ? d.frequency.monthlyIntl : d.frequency.monthlySoon}</p>
         </fieldset>
 
         <fieldset class="pieces">
@@ -214,8 +218,8 @@ const bank = foundation.bank;
           <p class="summary__piece" data-summary-piece></p>
           <p class="summary__amount" data-summary-amount></p>
           <ul class="impact" data-impact></ul>
-          <label class="check check--fee" hidden={transfer}>
-            <input type="checkbox" name="coverFee" checked={!transfer} />
+          <label class="check check--fee" hidden={offline}>
+            <input type="checkbox" name="coverFee" checked={!offline} />
             <span data-fee-text></span>
           </label>
           <p class="summary__total">{d.confirm.total}: <strong data-summary-total></strong></p>
@@ -227,9 +231,9 @@ const bank = foundation.bank;
 
         <div class="actions">
           <button type="button" class="btn btn--ghost" data-prev="2">{d.confirm.back}</button>
-          <button type="submit" class="btn btn--primary btn--xl" data-confirm>{transfer ? d.transfer.cta : d.confirm.cta}</button>
+          <button type="submit" class="btn btn--primary btn--xl" data-confirm>{ctaText}</button>
         </div>
-        <p class="secure">{transfer ? d.transfer.secure : d.confirm.secure}</p>
+        <p class="secure">{secureText}</p>
       </div>
 
       <!-- Resultado: pendiente / rechazado / error -->
@@ -239,6 +243,10 @@ const bank = foundation.bank;
         </div>
         <div>
           <p class="result__msg" data-result-msg aria-live="assertive"></p>
+          <p class="result__paypal"><a class="btn btn--primary btn--xl" data-wompi-link target="_blank" rel="noopener" hidden>{d.links.pay}</a></p>
+          <p class="result__alt" data-bank-toggle-wrap hidden>
+            <button type="button" class="btn btn--white" data-bank-toggle>{d.links.preferTransfer}</button>
+          </p>
           <div class="bank" data-bank hidden>
             <dl>
               <div><dt>{d.transfer.rows.bank}</dt><dd>{bank.name}</dd></div>
@@ -757,6 +765,9 @@ const bank = foundation.bank;
     }
   }
   .result__paypal {
+    margin: 0 0 1rem;
+  }
+  .result__alt {
     margin: 0 0 1rem;
   }
   .result__paypal:has([hidden]) {

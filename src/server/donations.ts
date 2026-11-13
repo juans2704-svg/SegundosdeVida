@@ -29,7 +29,7 @@ import { quote } from '../lib/pricing';
 import { todayBogota, period, addDays, nextMonthOn } from './dates';
 import { ValidationError, type OrderInput } from './validate';
 import { pieces } from '../config/campaign';
-import { payments } from '../config/payments';
+import { payments, channelFrom, wompiLinkFor } from '../config/payments';
 
 /** Reintentos de un cobro mensual rechazado antes de pausar el plan. */
 export const MAX_FAILED_ATTEMPTS = 3;
@@ -57,14 +57,16 @@ function quoteOrThrow(o: OrderInput) {
 // ---------------------------------------------------------------------------
 export interface Checkout {
   reference: string;
-  provider: 'wompi' | 'paypal' | 'transfer';
+  provider: 'wompi' | 'paypal' | 'transfer' | 'wompi-link';
   currency: 'COP' | 'USD';
   amountInCents: number;
   publicKey: string;
   integrity: string | null;
   simulated: boolean;
-  /** PayPal: enlace de pago donde el donante termina el aporte. */
+  /** PayPal o enlace de Wompi: donde el donante termina el aporte. */
   paymentUrl?: string;
+  /** Enlace de Wompi: true si ya trae el valor (si no, el donante lo escribe). */
+  exact?: boolean;
 }
 
 /** Código corto y fácil de escribir en la descripción de la transferencia (sin 0/O ni 1/I). */
@@ -74,16 +76,19 @@ const transferCode = () => {
 };
 
 /**
- * Aporte por transferencia: queda pendiente con un código que el donante escribe
- * en la descripción. No hay comisión: llega completo a la cuenta de la fundación.
+ * Aporte por enlace de Wompi o por transferencia: queda pendiente con un código
+ * corto y el admin lo confirma al verlo en Wompi o en la cuenta Bancolombia.
+ * Sin comisión para el donante: paga exactamente el valor de su pieza.
  */
-async function createTransferDonation(o: OrderInput): Promise<Checkout> {
+export const WOMPI_LINK_NOTE = 'Enlace de pago Wompi';
+
+async function createOfflineDonation(o: OrderInput, kind: 'links' | 'transfer'): Promise<Checkout> {
   const q = quoteOrThrow({ ...o, region: 'co', coverFee: false });
   const reference = transferCode();
   await getStore().insertDonation({
     reference,
     status: 'pending',
-    source: 'transfer',
+    source: kind === 'links' ? 'wompi' : 'transfer',
     frequency: 'once',
     subscriptionId: null,
     pieceId: q.piece.id,
@@ -97,14 +102,17 @@ async function createTransferDonation(o: OrderInput): Promise<Checkout> {
     consent: true,
     showOnWall: o.donor.showOnWall,
     certificate: o.donor.certificate,
-    notes: null,
+    notes: kind === 'links' ? WOMPI_LINK_NOTE : null,
     createdBy: null,
   });
-  return { reference, provider: 'transfer', currency: 'COP', amountInCents: q.amountCOP * 100, publicKey: '', integrity: null, simulated: false };
+  const base = { reference, currency: 'COP' as const, amountInCents: q.amountCOP * 100, publicKey: '', integrity: null, simulated: false };
+  if (kind === 'transfer') return { ...base, provider: 'transfer' };
+  const link = wompiLinkFor(q.amountCOP);
+  return { ...base, provider: 'wompi-link', paymentUrl: link.url, exact: link.exact };
 }
 
-/** Canal de recaudo: transferencia bancaria (por ahora) u online (pasarelas). */
-export const paymentChannel = () => (env('PUBLIC_PAYMENT_CHANNEL') || payments.channel) === 'online' ? 'online' : 'transfer';
+/** Canal de recaudo: enlaces de Wompi (por defecto), transferencia u online (API). */
+export const paymentChannel = () => channelFrom(env('PUBLIC_PAYMENT_CHANNEL') || payments.channel);
 
 /** Wompi se enciende con PUBLIC_WOMPI_ENABLED=true (mientras tanto, solo PayPal). */
 export const wompiEnabled = () => env('PUBLIC_WOMPI_ENABLED') === 'true' || payments.wompiEnabled;
@@ -123,7 +131,8 @@ function assertPaymentsConfigured() {
 
 export async function createDonation(o: OrderInput): Promise<Checkout> {
   if (o.frequency !== 'once') throw new ValidationError('Para el Plan Padrino usa /api/subscriptions.');
-  if (paymentChannel() === 'transfer') return createTransferDonation(o);
+  const channel = paymentChannel();
+  if (channel !== 'online') return createOfflineDonation(o, channel);
   const q = quoteOrThrow(o);
   const viaPaypal = q.provider === 'paypal';
   if (viaPaypal && !payments.paypal.link) {
@@ -183,13 +192,14 @@ export async function createDonation(o: OrderInput): Promise<Checkout> {
  * Aportes por PayPal o transferencia: el admin confirma (o descarta) el aporte
  * cuando lo ve en la cuenta. Solo cambia aportes que siguen pendientes.
  */
-const CONFIRMABLE: Record<string, string> = { paypal: 'PayPal', transfer: 'la cuenta Bancolombia' };
+const CONFIRMABLE: Record<string, string> = { paypal: 'PayPal', transfer: 'la cuenta Bancolombia', wompi: 'Wompi' };
 
 export async function confirmPendingDonation(reference: string, approve: boolean, admin: string) {
   const store = getStore();
   const d = await store.getDonation(reference);
-  const where = d && CONFIRMABLE[d.source];
-  if (!d || !where) throw Object.assign(new ValidationError('Aporte por PayPal o transferencia no encontrado.'), { status: 404 });
+  // Wompi: solo los aportes por enlace de pago; los de la integración automática se confirman solos.
+  const where = d && (d.source !== 'wompi' || d.notes === WOMPI_LINK_NOTE) ? CONFIRMABLE[d.source] : undefined;
+  if (!d || !where) throw Object.assign(new ValidationError('Aporte pendiente de confirmar no encontrado.'), { status: 404 });
   const updated = await store.transitionDonation(
     reference,
     ['pending'],
@@ -365,8 +375,8 @@ export interface SubscriptionResult {
 /** Alta del Plan Padrino: guarda la tarjeta (tokenizada por Wompi) y hace el primer cobro de inmediato. */
 export async function createSubscription(o: OrderInput, payment: { token: string; type?: 'CARD' | 'NEQUI' }): Promise<SubscriptionResult> {
   if (o.frequency !== 'monthly') throw new ValidationError('Frecuencia no válida para el Plan Padrino.');
-  if (paymentChannel() === 'transfer') {
-    throw Object.assign(new ValidationError('El Plan Padrino mensual llega muy pronto 💛 Por ahora pon tu pieza con una transferencia.'), { status: 503 });
+  if (paymentChannel() !== 'online') {
+    throw Object.assign(new ValidationError('El Plan Padrino mensual llega muy pronto 💛 Por ahora pon tu pieza con un aporte único.'), { status: 503 });
   }
   assertWompiEnabled();
   assertPaymentsConfigured();

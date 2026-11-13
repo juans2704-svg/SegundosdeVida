@@ -173,6 +173,18 @@ const es = {
     paypal: (amount: string) =>
       `¡Último paso! 🌎 Termina tu aporte de <strong>${amount}</strong> en PayPal (se abre en otra pestaña). Si PayPal te pide el monto, escribe ese valor. Apenas la fundación lo confirme, tu pieza aparecerá en la casa 💛`,
     paypalCta: 'Ir a PayPal 💛',
+    links: {
+      label: 'Wompi (Bancolombia)',
+      methods: 'Tarjeta débito o crédito, PSE, Nequi o botón Bancolombia',
+      cta: '💳 Ir a pagar',
+      secure: '🔒 Pagas en Wompi, la pasarela de Bancolombia. Nunca vemos los datos de tu tarjeta.',
+      exact: (amount: string) =>
+        `¡Último paso! 💳 Paga tu pieza de <strong>${amount}</strong> en Wompi (se abre en otra pestaña). Apenas la fundación confirme el pago, tu pieza aparecerá en la casa 💛`,
+      open: (amount: string) =>
+        `¡Último paso! 💳 En Wompi (se abre en otra pestaña) escribe <strong>${amount}</strong> como valor y paga con tu medio favorito. Apenas la fundación confirme el pago, tu pieza aparecerá en la casa 💛`,
+      pay: 'Pagar con Wompi 💛',
+      preferTransfer: '🏦 Prefiero transferir a la cuenta',
+    },
     transfer: {
       label: 'Transferencia bancaria',
       methods: 'Bancolombia · Cuenta de ahorros de la fundación (sin comisiones)',
@@ -203,7 +215,9 @@ const es = {
       {
         icon: '🔒',
         text:
-          payments.channel === 'transfer'
+          payments.channel === 'links'
+            ? 'Pago seguro con Wompi, la pasarela de Bancolombia'
+            : payments.channel === 'transfer'
             ? 'Transferencia directa a la cuenta Bancolombia de la fundación'
             : payments.wompiEnabled
               ? 'Pago seguro con Wompi y PayPal'

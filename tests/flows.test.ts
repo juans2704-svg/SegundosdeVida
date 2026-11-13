@@ -63,6 +63,27 @@ it('sin llaves de Wompi, el servidor trabaja en modo simulado', () => {
   expect(getWompiConfig().mode).toBe('mock');
 });
 
+it('por enlace de Wompi: valor fijo si existe, si no el abierto; pendiente hasta que el admin confirma', async () => {
+  setStore(createMemoryStore());
+  process.env.PUBLIC_PAYMENT_CHANNEL = 'links';
+  try {
+    const exact = await createDonation(order({ coverFee: true }));
+    expect(exact).toMatchObject({ provider: 'wompi-link', exact: true, paymentUrl: 'https://checkout.wompi.co/l/2NDA04' });
+    expect(exact.reference).toMatch(/^SC-[A-HJ-NP-Z2-9]{6}$/);
+    expect(await getStore().getDonation(exact.reference)).toMatchObject({ status: 'pending', source: 'wompi', fee: 0, chargeAmount: 100_000 });
+    const open = await createDonation(order({ pieceId: 'habitacion' }));
+    expect(open).toMatchObject({ exact: false, paymentUrl: 'https://checkout.wompi.co/l/r2Twsx' });
+    const custom = await createDonation(order({ pieceId: 'libre', custom: 500_000 }));
+    expect(custom).toMatchObject({ exact: true, paymentUrl: 'https://checkout.wompi.co/l/sLLqUE' });
+    expect((await getStore().progress()).raisedCOP).toBe(0);
+    await confirmPendingDonation(exact.reference, true, 'admin');
+    expect((await getStore().progress()).raisedCOP).toBe(100_000);
+    await expect(createSubscription(order({ frequency: 'monthly', pieceId: 'pintura' }), { token: 'x' })).rejects.toThrow(/muy pronto/);
+  } finally {
+    process.env.PUBLIC_PAYMENT_CHANNEL = 'online';
+  }
+});
+
 it('por transferencia: código corto, sin comisión, pendiente hasta que el admin confirma', async () => {
   setStore(createMemoryStore());
   process.env.PUBLIC_PAYMENT_CHANNEL = 'transfer';
@@ -196,7 +217,7 @@ for (const [name, reset] of backends) {
       expect((await confirmPendingDonation(c2.reference, false, 'admin')).status).toBe('voided');
       // no sirve para aportes de Wompi
       const w = await createDonation(order());
-      await expect(confirmPendingDonation(w.reference, true, 'admin')).rejects.toThrow(/PayPal/);
+      await expect(confirmPendingDonation(w.reference, true, 'admin')).rejects.toThrow(/no encontrado/);
     });
 
     it('aporte manual (transferencia) suma de inmediato', async () => {

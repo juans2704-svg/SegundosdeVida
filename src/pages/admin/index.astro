@@ -6,6 +6,7 @@
 import '../../styles/global.css';
 import { getStore } from '../../server/db';
 import { getWompiConfig } from '../../server/wompi';
+import { WOMPI_LINK_NOTE } from '../../server/donations';
 import { campaign, pieces } from '../../config/campaign';
 import { formatCOP } from '../../lib/format';
 
@@ -141,10 +142,10 @@ const modeLabel = { mock: 'Pruebas sin llaves (simulado)', sandbox: 'Wompi sandb
                     <td>
                       <code>{d.reference}</code>
                       {d.statusMessage && <small>{d.statusMessage}</small>}
-                      {role === 'admin' && (d.source === 'paypal' || d.source === 'transfer') && d.status === 'pending' && (
+                      {role === 'admin' && d.status === 'pending' && (d.source === 'paypal' || d.source === 'transfer' || d.notes === WOMPI_LINK_NOTE) && (
                         <span class="confirm">
                           <button type="button" class="btn btn--primary" data-confirm={d.reference} data-approve="1">
-                            {d.source === 'paypal' ? '✓ Llegó a PayPal' : '✓ Llegó la transferencia'}
+                            {d.source === 'paypal' ? '✓ Llegó a PayPal' : d.source === 'wompi' ? '✓ Llegó a Wompi' : '✓ Llegó la transferencia'}
                           </button>
                           <button type="button" class="btn btn--white" data-confirm={d.reference} data-approve="0">✗ No llegó</button>
                         </span>
@@ -213,7 +214,7 @@ const modeLabel = { mock: 'Pruebas sin llaves (simulado)', sandbox: 'Wompi sandb
           const approve = btn.dataset.approve === '1';
           const ok = confirm(
             approve
-              ? '¿Confirmas que este aporte ya aparece en la cuenta de la fundación (Bancolombia o PayPal)? Sumará al recaudo.'
+              ? '¿Confirmas que este aporte ya aparece en la cuenta de la fundación (Wompi, Bancolombia o PayPal)? Sumará al recaudo.'
               : '¿Descartar este aporte? Úsalo solo si el dinero nunca llegó.',
           );
           if (!ok) return;

@@ -13,18 +13,34 @@ export type Region = 'co' | 'intl';
 
 const envMode = import.meta.env.PUBLIC_PAYMENTS_MODE as PaymentsMode | undefined;
 
-export type PaymentChannel = 'transfer' | 'online';
+export type PaymentChannel = 'links' | 'transfer' | 'online';
+
+/** Lee PUBLIC_PAYMENT_CHANNEL: `online`, `transfer` o, por defecto, `links`. */
+export const channelFrom = (v: string | undefined): PaymentChannel => (v === 'online' || v === 'transfer' ? v : 'links');
 
 export const payments = {
   mode: (envMode === 'live' ? 'live' : 'demo') as PaymentsMode,
 
   /**
-   * Cómo se recibe el aporte:
-   * - `transfer` (por ahora): la página muestra los datos de la cuenta Bancolombia;
-   *   el aporte queda pendiente y el admin lo confirma en /admin al ver la transferencia.
-   * - `online`: pasarelas (Wompi y/o PayPal). Se activa con PUBLIC_PAYMENT_CHANNEL=online.
+   * Cómo se recibe el aporte (PUBLIC_PAYMENT_CHANNEL):
+   * - `links` (por defecto): enlaces de pago de Wompi (tarjeta, PSE, Nequi, Bancolombia).
+   *   Wompi no avisa a la página: el aporte queda pendiente y el admin lo confirma en /admin.
+   *   Como alternativa se muestran los datos de la cuenta para transferir.
+   * - `transfer`: solo datos de la cuenta Bancolombia.
+   * - `online`: integración completa con Wompi/PayPal (llaves de API y avisos automáticos).
    */
-  channel: (import.meta.env.PUBLIC_PAYMENT_CHANNEL === 'online' ? 'online' : 'transfer') as PaymentChannel,
+  channel: channelFrom(import.meta.env.PUBLIC_PAYMENT_CHANNEL),
+
+  /** Enlaces de pago creados en el panel de Wompi de la fundación. */
+  wompiLinks: {
+    open: 'https://checkout.wompi.co/l/r2Twsx',
+    fixed: {
+      50_000: 'https://checkout.wompi.co/l/HmCgCf',
+      100_000: 'https://checkout.wompi.co/l/2NDA04',
+      250_000: 'https://checkout.wompi.co/l/4VL5ZF',
+      500_000: 'https://checkout.wompi.co/l/sLLqUE',
+    } as Record<number, string>,
+  },
 
   /**
    * Wompi (Colombia, COP y Plan Padrino). Apagado mientras la fundación termina
@@ -74,3 +90,12 @@ export const regions: Record<Region, { currency: 'COP' | 'USD'; provider: 'wompi
   co: { currency: 'COP', provider: 'wompi' },
   intl: { currency: 'USD', provider: 'paypal' },
 };
+
+/**
+ * Enlace de Wompi para un valor: el de valor fijo si existe uno igual; si no,
+ * el de valor abierto (el donante escribe el valor en Wompi).
+ */
+export function wompiLinkFor(amountCOP: number): { url: string; exact: boolean } {
+  const fixed = payments.wompiLinks.fixed[amountCOP];
+  return fixed ? { url: fixed, exact: true } : { url: payments.wompiLinks.open, exact: false };
+}
